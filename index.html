@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE IRIS ARCHIVE</title>
+
+  <!-- PLACEHOLDER: Replace with your preferred Google Font if desired -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <main class="site-shell">
+
+    <section class="hero" id="hero">
+      <div class="grain"></div>
+      <div class="ambient-orb orb-one"></div>
+      <div class="ambient-orb orb-two"></div>
+
+      <div class="brand">
+        <p class="eyebrow">THE IRIS ARCHIVE</p>
+        <h1>Enter perception.</h1>
+        <p class="subline">
+          A psychedelic state library viewed through the living eye.
+        </p>
+      </div>
+
+      <div class="eye-stage" id="eyeStage">
+        <div class="eye-shadow"></div>
+
+        <div class="eye" id="eye">
+          <div class="sclera">
+            <div class="veins"></div>
+
+            <div class="iris" id="iris">
+              <div class="iris-ring ring-one"></div>
+              <div class="iris-ring ring-two"></div>
+              <div class="iris-ring ring-three"></div>
+
+              <div class="iris-fibers"></div>
+              <div class="iris-depth"></div>
+
+              <button class="pupil" id="pupil" aria-label="Enter The Web">
+                <span class="pupil-glow"></span>
+              </button>
+
+              <div class="catchlight one"></div>
+              <div class="catchlight two"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form class="search-panel" id="searchForm">
+        <label for="stateSearch">Search a psychedelic state</label>
+        <div class="search-row">
+          <input
+            id="stateSearch"
+            type="text"
+            autocomplete="off"
+            placeholder="Try: ego dissolution, time distortion, entity encounter..."
+          />
+          <button type="submit">Enter</button>
+        </div>
+
+        <div class="suggestions" id="suggestions"></div>
+      </form>
+    </section>
+
+    <section class="web" id="web">
+      <canvas id="webCanvas"></canvas>
+
+      <button class="back-button" id="backButton">← Origin</button>
+
+      <aside class="state-card" id="stateCard">
+        <p class="card-label">STATE</p>
+        <h2 id="stateTitle">Sensory Amplification</h2>
+        <p id="stateDescription">
+          Perception becomes heightened; ordinary stimuli feel vivid, detailed, and unusually alive.
+        </p>
+
+        <div class="card-grid">
+          <div>
+            <span>Perceptual</span>
+            <p id="statePerceptual">Colors deepen, textures sharpen, sounds separate.</p>
+          </div>
+          <div>
+            <span>Cognitive</span>
+            <p id="stateCognitive">Attention locks onto detail and association.</p>
+          </div>
+          <div>
+            <span>Emotional Tone</span>
+            <p id="stateEmotion">Awe, curiosity, fascination.</p>
+          </div>
+          <div>
+            <span>Progression</span>
+            <p id="stateProgression">Pattern recognition, symbolic thinking.</p>
+          </div>
+        </div>
+
+        <p class="placeholder-note">
+          PLACEHOLDER: Add citations, safety copy, spiritual framing, or your own language here.
+        </p>
+      </aside>
+
+      <div class="node-dock" id="nodeDock"></div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
