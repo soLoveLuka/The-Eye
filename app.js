@@ -1,320 +1,531 @@
 const states = [
   {
     name: "Sensory Amplification",
-    description: "Perception becomes heightened; ordinary stimuli feel vivid, detailed, and unusually alive.",
-    perceptual: "Colors deepen, textures sharpen, sound gains space and separation.",
-    cognitive: "Attention locks onto small details. Ordinary things feel newly significant.",
-    emotion: "Awe, curiosity, fascination.",
-    progression: "Pattern recognition, emotional expansion.",
-    color: "#6de9ff"
+    essence: "Ordinary sensation becomes vivid, dimensional, and strangely intimate.",
+    perception: "Color, texture, sound, and space feel intensified.",
+    mind: "Attention begins attaching to fine detail and pattern.",
+    tone: "Awe, curiosity, fascination, and sometimes overwhelm.",
+    color: "#74f4ff"
   },
   {
     name: "Pattern Recognition",
-    description: "The mind rapidly connects shapes, ideas, memories, and meanings into visible or conceptual patterns.",
-    perceptual: "Repeating geometry, symmetry, texture movement, visual linking.",
-    cognitive: "Associative thinking accelerates. Connections feel obvious and alive.",
-    emotion: "Wonder, intensity, occasional overwhelm.",
-    progression: "Symbolic thinking, over-interpretation.",
-    color: "#8a6cff"
-  },
-  {
-    name: "Symbolic Thinking",
-    description: "Objects, memories, and sensations begin to feel layered with metaphor or message.",
-    perceptual: "Scenes appear meaningful, theatrical, or archetypal.",
-    cognitive: "Abstract interpretation increases. The mind builds narratives around experience.",
-    emotion: "Insightful, strange, sacred, or emotionally charged.",
-    progression: "Archetypal imagery, narrative construction.",
-    color: "#e8c77c"
-  },
-  {
-    name: "Ego Dissolution",
-    description: "The usual boundary of personal identity softens, weakens, or disappears.",
-    perceptual: "Self and environment may feel blended or continuous.",
-    cognitive: "Less self-referencing. Thoughts may feel ownerless.",
-    emotion: "Peace, awe, fear, surrender, or disorientation.",
-    progression: "Unity, spaciousness, identity confusion.",
-    color: "#f4efe5"
-  },
-  {
-    name: "Time Distortion",
-    description: "The perception of time becomes irregular, stretched, compressed, looped, or nonlinear.",
-    perceptual: "Moments may feel elongated, frozen, or repeating.",
-    cognitive: "Sequence tracking becomes difficult. Now feels unusually large.",
-    emotion: "Neutral, fascinating, or unsettling.",
-    progression: "Looping thought, deep presence.",
-    color: "#ff6fae"
-  },
-  {
-    name: "Looping Thought",
-    description: "A thought, question, phrase, or emotional pattern repeats in a cycle that can be hard to exit.",
-    perceptual: "Experience may feel circular or recursive.",
-    cognitive: "The mind returns to the same point repeatedly.",
-    emotion: "Anxious, trapped, curious, or analytical.",
-    progression: "Anxiety, breakthrough insight, surrender.",
-    color: "#ff8a5c"
-  },
-  {
-    name: "Entity Encounter",
-    description: "The perception of autonomous-seeming beings, presences, figures, guides, tricksters, or observers.",
-    perceptual: "Forms may appear independent, intelligent, or responsive.",
-    cognitive: "The mind interprets interaction, message, presence, or contact.",
-    emotion: "Awe, fear, reverence, curiosity.",
-    progression: "Archetypal imagery, narrative construction.",
-    color: "#b57cff"
-  },
-  {
-    name: "Unity / Oneness",
-    description: "A state where separation between self, world, others, or existence feels reduced or absent.",
-    perceptual: "Boundaries dissolve into a connected field.",
-    cognitive: "Self/other distinctions soften. Meaning may feel total.",
-    emotion: "Peace, completeness, devotion, awe.",
-    progression: "Afterglow, integration, reverence.",
-    color: "#9dffcb"
+    essence: "The mind begins seeing hidden structure between shapes, memories, symbols, and events.",
+    perception: "Geometry appears in surfaces; repetition becomes magnetic.",
+    mind: "Association accelerates. Everything seems linked.",
+    tone: "Wonder, intensity, revelation, or cognitive overload.",
+    color: "#a789ff"
   },
   {
     name: "Visual Drift",
-    description: "Surfaces appear to breathe, melt, ripple, crawl, or subtly rearrange.",
-    perceptual: "Walls, textures, faces, and shadows may shift softly.",
-    cognitive: "Attention becomes fascinated by motion in stillness.",
-    emotion: "Playful, uncanny, beautiful, or strange.",
-    progression: "Pattern recognition, geometry, immersion.",
-    color: "#70ffd8"
+    essence: "Stillness begins to move; surfaces breathe, ripple, crawl, or softly rearrange.",
+    perception: "Edges pulse, textures flow, shadows bend, walls seem alive.",
+    mind: "Attention becomes hypnotized by motion in stillness.",
+    tone: "Playful, eerie, beautiful, uncanny.",
+    color: "#78ffc8"
+  },
+  {
+    name: "Time Distortion",
+    essence: "The clock loses authority. Moments stretch, compress, repeat, or dissolve.",
+    perception: "The present feels enlarged; sequence becomes slippery.",
+    mind: "Tracking before and after becomes unstable.",
+    tone: "Fascination, stillness, confusion, or unease.",
+    color: "#ff77bd"
+  },
+  {
+    name: "Looping Thought",
+    essence: "A thought becomes a hallway that keeps returning to the same door.",
+    perception: "Experience may feel recursive, circular, or trapped.",
+    mind: "The same phrase, fear, insight, or question repeats.",
+    tone: "Analytical, anxious, trapped, or suddenly clarifying.",
+    color: "#ff9d5c"
+  },
+  {
+    name: "Ego Dissolution",
+    essence: "The border of self softens until identity feels less fixed, private, or separate.",
+    perception: "Self and world may begin to blend.",
+    mind: "Thoughts feel less owned. The narrator quiets.",
+    tone: "Peace, terror, awe, surrender, spaciousness.",
+    color: "#eee7d8"
+  },
+  {
+    name: "Entity Encounter",
+    essence: "The mind perceives autonomous-seeming figures, presences, guides, observers, or tricksters.",
+    perception: "Forms appear responsive, intelligent, or aware.",
+    mind: "Experience becomes relational, symbolic, or conversational.",
+    tone: "Awe, fear, reverence, curiosity.",
+    color: "#c084fc"
+  },
+  {
+    name: "Unity / Oneness",
+    essence: "Separation fades; self, world, memory, and existence feel woven from the same fabric.",
+    perception: "Boundaries dissolve into a shared field.",
+    mind: "Division between self and other weakens.",
+    tone: "Peace, devotion, completeness, sacredness.",
+    color: "#b9ffd8"
   },
   {
     name: "Afterglow",
-    description: "A post-experience state marked by emotional clarity, softness, gratitude, or renewed perspective.",
-    perceptual: "The world may feel clean, quiet, or gently illuminated.",
-    cognitive: "Insights feel easier to hold. Priorities may feel rearranged.",
-    emotion: "Peace, tenderness, hope, humility.",
-    progression: "Integration, reflection, lifestyle change.",
-    color: "#ffe6a8"
+    essence: "A softened clarity remains after intensity passes, as if the world has been rinsed clean.",
+    perception: "Light, space, and ordinary detail feel gentle.",
+    mind: "Priorities may feel rearranged and easier to see.",
+    tone: "Gratitude, tenderness, humility, hope.",
+    color: "#ffe3a3"
   }
 ];
 
-const hero = document.getElementById("hero");
-const web = document.getElementById("web");
-const pupil = document.getElementById("pupil");
-const form = document.getElementById("searchForm");
-const input = document.getElementById("stateSearch");
-const suggestions = document.getElementById("suggestions");
-const backButton = document.getElementById("backButton");
-const nodeDock = document.getElementById("nodeDock");
+const origin = document.getElementById("origin");
+const archive = document.getElementById("archive");
+const enterButton = document.getElementById("enterButton");
+const returnButton = document.getElementById("returnButton");
+const searchInput = document.getElementById("searchInput");
+const stateOrbit = document.getElementById("stateOrbit");
 
-const title = document.getElementById("stateTitle");
-const desc = document.getElementById("stateDescription");
-const perceptual = document.getElementById("statePerceptual");
-const cognitive = document.getElementById("stateCognitive");
-const emotion = document.getElementById("stateEmotion");
-const progression = document.getElementById("stateProgression");
+const stateIndex = document.getElementById("stateIndex");
+const stateName = document.getElementById("stateName");
+const stateEssence = document.getElementById("stateEssence");
+const statePerception = document.getElementById("statePerception");
+const stateMind = document.getElementById("stateMind");
+const stateTone = document.getElementById("stateTone");
 
-const canvas = document.getElementById("webCanvas");
-const ctx = canvas.getContext("2d");
+const eyeCanvas = document.getElementById("eyeCanvas");
+const eyeCtx = eyeCanvas.getContext("2d");
 
-let activeState = states[0];
-let particles = [];
-let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+const archiveCanvas = document.getElementById("archiveCanvas");
+const archiveCtx = archiveCanvas.getContext("2d");
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+let width = window.innerWidth;
+let height = window.innerHeight;
+let dpr = window.devicePixelRatio || 1;
+
+let mouse = {
+  x: width / 2,
+  y: height / 2,
+  easeX: width / 2,
+  easeY: height / 2,
+  down: false
+};
+
+let activeState = 0;
+let entering = false;
+let eyeZoom = 1;
+let blink = 0;
+let archiveTime = 0;
+
+function resize() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  dpr = window.devicePixelRatio || 1;
+
+  [eyeCanvas, archiveCanvas].forEach(canvas => {
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+  });
+
+  eyeCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  archiveCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+window.addEventListener("resize", resize);
+resize();
 
-function createParticles() {
-  particles = [];
+window.addEventListener("mousemove", e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
 
-  const count = window.innerWidth < 800 ? 70 : 130;
+window.addEventListener("mousedown", () => {
+  mouse.down = true;
+});
 
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = Math.random() * Math.min(window.innerWidth, window.innerHeight) * 0.45;
+window.addEventListener("mouseup", () => {
+  mouse.down = false;
+});
 
-    particles.push({
-      x: window.innerWidth / 2 + Math.cos(angle) * radius,
-      y: window.innerHeight / 2 + Math.sin(angle) * radius,
-      baseX: window.innerWidth / 2 + Math.cos(angle) * radius,
-      baseY: window.innerHeight / 2 + Math.sin(angle) * radius,
-      size: Math.random() * 2.6 + 0.8,
-      speed: Math.random() * 0.008 + 0.002,
-      angle,
-      radius,
-      pulse: Math.random() * Math.PI * 2
+eyeCanvas.addEventListener("click", () => {
+  enterArchive(findState(searchInput.value));
+});
+
+enterButton.addEventListener("click", () => {
+  enterArchive(findState(searchInput.value));
+});
+
+searchInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    enterArchive(findState(searchInput.value));
+  }
+});
+
+returnButton.addEventListener("click", () => {
+  origin.classList.remove("entering");
+  archive.classList.remove("visible");
+  entering = false;
+  eyeZoom = 1;
+});
+
+function findState(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return 0;
+
+  const exact = states.findIndex(s => s.name.toLowerCase() === q);
+  if (exact >= 0) return exact;
+
+  const partial = states.findIndex(s => s.name.toLowerCase().includes(q));
+  if (partial >= 0) return partial;
+
+  return 0;
+}
+
+function enterArchive(index) {
+  activeState = index;
+  updateStateUI();
+  entering = true;
+  origin.classList.add("entering");
+
+  setTimeout(() => {
+    archive.classList.add("visible");
+  }, 620);
+}
+
+function updateStateUI() {
+  const s = states[activeState];
+
+  stateIndex.textContent = String(activeState + 1).padStart(2, "0");
+  stateName.textContent = s.name;
+  stateEssence.textContent = s.essence;
+  statePerception.textContent = s.perception;
+  stateMind.textContent = s.mind;
+  stateTone.textContent = s.tone;
+
+  document.documentElement.style.setProperty("--active", s.color);
+
+  [...stateOrbit.children].forEach((btn, i) => {
+    btn.classList.toggle("active", i === activeState);
+  });
+}
+
+function buildOrbit() {
+  states.forEach((s, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = s.name;
+    btn.addEventListener("click", () => {
+      activeState = i;
+      updateStateUI();
     });
+    stateOrbit.appendChild(btn);
+  });
+
+  updateStateUI();
+}
+
+buildOrbit();
+
+function drawEye() {
+  const t = performance.now() * 0.001;
+
+  mouse.easeX += (mouse.x - mouse.easeX) * 0.045;
+  mouse.easeY += (mouse.y - mouse.easeY) * 0.045;
+
+  if (entering) eyeZoom += (9 - eyeZoom) * 0.035;
+  else eyeZoom += (1 - eyeZoom) * 0.035;
+
+  blink = Math.max(0, blink - 0.035);
+  if (Math.random() < 0.004 && !entering) blink = 1;
+
+  eyeCtx.clearRect(0, 0, width, height);
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const min = Math.min(width, height);
+
+  const lookX = (mouse.easeX - cx) / width;
+  const lookY = (mouse.easeY - cy) / height;
+
+  eyeCtx.save();
+  eyeCtx.translate(cx, cy);
+  eyeCtx.scale(eyeZoom, eyeZoom);
+  eyeCtx.translate(-cx, -cy);
+
+  drawCameraVignette(eyeCtx);
+  drawWetSurface(eyeCtx, t);
+  drawMacroPupil(eyeCtx, cx + lookX * 24, cy + lookY * 18, min, t);
+  drawEyelidShadow(eyeCtx, blink, t);
+  drawFilmNoise(eyeCtx, t);
+
+  eyeCtx.restore();
+
+  requestAnimationFrame(drawEye);
+}
+
+function drawCameraVignette(ctx) {
+  const g = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.72);
+  g.addColorStop(0, "rgba(255,255,255,0.02)");
+  g.addColorStop(0.42, "rgba(0,0,0,0.06)");
+  g.addColorStop(0.76, "rgba(0,0,0,0.54)");
+  g.addColorStop(1, "rgba(0,0,0,0.96)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, width, height);
+}
+
+function drawWetSurface(ctx, t) {
+  for (let i = 0; i < 16; i++) {
+    const x = width * noiseLike(i * 12.7, t * 0.08);
+    const y = height * noiseLike(i * 4.3, t * 0.07);
+    const r = 80 + 180 * noiseLike(i * 9.1, t * 0.04);
+
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, "rgba(255,255,255,0.035)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
-function drawWeb() {
-  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+function drawMacroPupil(ctx, cx, cy, min, t) {
+  const irisR = min * 0.55;
+  const pupilR = min * (0.145 + Math.sin(t * 0.7) * 0.006 + (mouse.down ? 0.018 : 0));
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  const irisGradient = ctx.createRadialGradient(cx, cy, pupilR * 0.4, cx, cy, irisR);
+  irisGradient.addColorStop(0.00, "#000000");
+  irisGradient.addColorStop(0.19, "#050407");
+  irisGradient.addColorStop(0.25, "#1b1028");
+  irisGradient.addColorStop(0.42, "#263b47");
+  irisGradient.addColorStop(0.58, "#8b7549");
+  irisGradient.addColorStop(0.76, "#201329");
+  irisGradient.addColorStop(1.00, "#030304");
 
-  const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, window.innerWidth * 0.65);
-  gradient.addColorStop(0, `${hexToRgba(activeState.color, 0.22)}`);
-  gradient.addColorStop(0.35, "rgba(120, 70, 255, 0.08)");
-  gradient.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = irisGradient;
+  ctx.beginPath();
+  ctx.arc(cx, cy, irisR, 0, Math.PI * 2);
+  ctx.fill();
 
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  ctx.save();
+  ctx.translate(cx, cy);
 
-  particles.forEach((p, i) => {
-    p.pulse += 0.018;
-    p.angle += p.speed;
+  for (let i = 0; i < 720; i++) {
+    const a = (i / 720) * Math.PI * 2;
+    const wobble =
+      Math.sin(a * 9 + t * 0.7) * 0.018 +
+      Math.sin(a * 23 - t * 0.5) * 0.009;
 
-    const breathe = Math.sin(p.pulse) * 14;
-    p.x = centerX + Math.cos(p.angle) * (p.radius + breathe);
-    p.y = centerY + Math.sin(p.angle) * (p.radius + breathe);
+    const inner = pupilR * (1.05 + Math.sin(i) * 0.03);
+    const outer = irisR * (0.72 + wobble + Math.random() * 0.002);
 
-    const dxMouse = mouse.x - p.x;
-    const dyMouse = mouse.y - p.y;
-    const mouseDist = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
-
-    if (mouseDist < 130) {
-      p.x -= dxMouse * 0.018;
-      p.y -= dyMouse * 0.018;
-    }
-
-    for (let j = i + 1; j < particles.length; j++) {
-      const q = particles[j];
-      const dx = p.x - q.x;
-      const dy = p.y - q.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 125) {
-        ctx.beginPath();
-        ctx.strokeStyle = hexToRgba(activeState.color, 0.13 * (1 - dist / 125));
-        ctx.lineWidth = 0.7;
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(q.x, q.y);
-        ctx.stroke();
-      }
-    }
+    const alpha = 0.035 + 0.08 * Math.abs(Math.sin(a * 4 + t));
+    const hueShift = i % 3;
 
     ctx.beginPath();
-    ctx.fillStyle = hexToRgba(activeState.color, 0.52);
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = activeState.color;
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  });
+    ctx.strokeStyle =
+      hueShift === 0 ? `rgba(238,231,216,${alpha})` :
+      hueShift === 1 ? `rgba(116,244,255,${alpha * 0.55})` :
+      `rgba(167,137,255,${alpha * 0.45})`;
 
-  drawCentralNode(centerX, centerY);
+    ctx.lineWidth = Math.random() * 1.2 + 0.2;
 
-  requestAnimationFrame(drawWeb);
+    ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+    ctx.lineTo(Math.cos(a + wobble) * outer, Math.sin(a + wobble) * outer);
+    ctx.stroke();
+  }
+
+  for (let r = 0.22; r < 0.98; r += 0.055) {
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(238,231,216,${0.025 + Math.sin(t + r * 20) * 0.015})`;
+    ctx.lineWidth = 1;
+    ctx.arc(0, 0, irisR * r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  const pupilGradient = ctx.createRadialGradient(
+    cx - pupilR * 0.25,
+    cy - pupilR * 0.32,
+    0,
+    cx,
+    cy,
+    pupilR * 1.2
+  );
+  pupilGradient.addColorStop(0, "#08040b");
+  pupilGradient.addColorStop(0.48, "#000000");
+  pupilGradient.addColorStop(1, "#000000");
+
+  ctx.fillStyle = pupilGradient;
+  ctx.beginPath();
+  ctx.arc(cx, cy, pupilR, 0, Math.PI * 2);
+  ctx.fill();
+
+  const glow = ctx.createRadialGradient(cx, cy, pupilR * 0.2, cx, cy, pupilR * 2.2);
+  glow.addColorStop(0, "rgba(0,0,0,0.95)");
+  glow.addColorStop(0.48, "rgba(0,0,0,0.18)");
+  glow.addColorStop(1, "rgba(116,244,255,0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, pupilR * 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.62)";
+  ctx.beginPath();
+  ctx.ellipse(cx - irisR * 0.22, cy - irisR * 0.23, irisR * 0.095, irisR * 0.035, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  ctx.beginPath();
+  ctx.ellipse(cx + irisR * 0.17, cy + irisR * 0.16, irisR * 0.045, irisR * 0.018, -0.2, 0, Math.PI * 2);
+  ctx.fill();
 }
 
-function drawCentralNode(x, y) {
-  const time = performance.now() * 0.001;
-  const pulse = Math.sin(time * 1.5) * 8;
+function drawEyelidShadow(ctx, blinkAmount, t) {
+  const top = height * (0.08 + blinkAmount * 0.42 + Math.sin(t * 0.8) * 0.01);
+  const bottom = height * (0.92 - blinkAmount * 0.42);
 
+  const topGrad = ctx.createLinearGradient(0, 0, 0, top + height * 0.18);
+  topGrad.addColorStop(0, "rgba(0,0,0,0.98)");
+  topGrad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, width, top + height * 0.18);
+
+  const botGrad = ctx.createLinearGradient(0, bottom - height * 0.18, 0, height);
+  botGrad.addColorStop(0, "rgba(0,0,0,0)");
+  botGrad.addColorStop(1, "rgba(0,0,0,0.98)");
+  ctx.fillStyle = botGrad;
+  ctx.fillRect(0, bottom - height * 0.18, width, height);
+}
+
+function drawFilmNoise(ctx, t) {
+  ctx.save();
+  ctx.globalAlpha = 0.05;
+  for (let i = 0; i < 900; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    ctx.fillStyle = Math.random() > 0.5 ? "#ffffff" : "#000000";
+    ctx.fillRect(x, y, 1, 1);
+  }
+  ctx.restore();
+}
+
+function drawArchive() {
+  archiveTime += 0.01;
+
+  const s = states[activeState];
+  const cx = width * 0.54;
+  const cy = height * 0.46;
+
+  archiveCtx.clearRect(0, 0, width, height);
+
+  const bg = archiveCtx.createRadialGradient(cx, cy, 0, cx, cy, width * 0.8);
+  bg.addColorStop(0, hexToRgba(s.color, 0.18));
+  bg.addColorStop(0.28, "rgba(10,8,18,0.72)");
+  bg.addColorStop(1, "rgba(0,0,0,1)");
+  archiveCtx.fillStyle = bg;
+  archiveCtx.fillRect(0, 0, width, height);
+
+  archiveCtx.save();
+  archiveCtx.translate(cx, cy);
+
+  drawLiquidGeometry(archiveCtx, s.color, archiveTime);
+  drawMemoryThreads(archiveCtx, s.color, archiveTime);
+  drawArchivePupil(archiveCtx, s.color, archiveTime);
+
+  archiveCtx.restore();
+
+  requestAnimationFrame(drawArchive);
+}
+
+function drawLiquidGeometry(ctx, color, t) {
+  for (let layer = 0; layer < 7; layer++) {
+    const points = 7 + layer * 2;
+    const baseR = 70 + layer * 58;
+
+    ctx.beginPath();
+
+    for (let i = 0; i <= points; i++) {
+      const a = (i / points) * Math.PI * 2;
+      const distortion =
+        Math.sin(a * 3 + t * (0.7 + layer * 0.08)) * 20 +
+        Math.sin(a * 7 - t * 0.6) * 8;
+
+      const r = baseR + distortion;
+      const x = Math.cos(a + t * 0.045 * (layer % 2 ? 1 : -1)) * r;
+      const y = Math.sin(a + t * 0.045 * (layer % 2 ? 1 : -1)) * r;
+
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+
+    ctx.closePath();
+    ctx.strokeStyle = hexToRgba(color, 0.12 - layer * 0.01);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+}
+
+function drawMemoryThreads(ctx, color, t) {
+  for (let i = 0; i < 52; i++) {
+    const a = (i / 52) * Math.PI * 2 + Math.sin(t + i) * 0.08;
+    const r1 = 48 + Math.sin(t * 2 + i) * 8;
+    const r2 = 480 + Math.sin(t + i * 0.4) * 70;
+
+    const cp1 = r2 * 0.35;
+    const cp2 = r2 * 0.68;
+
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+    ctx.bezierCurveTo(
+      Math.cos(a + 0.5) * cp1,
+      Math.sin(a + 0.5) * cp1,
+      Math.cos(a - 0.42) * cp2,
+      Math.sin(a - 0.42) * cp2,
+      Math.cos(a) * r2,
+      Math.sin(a) * r2
+    );
+
+    ctx.strokeStyle = hexToRgba(color, 0.08);
+    ctx.lineWidth = 0.75;
+    ctx.stroke();
+  }
+}
+
+function drawArchivePupil(ctx, color, t) {
+  const pulse = Math.sin(t * 2) * 4;
+
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 170);
+  g.addColorStop(0, "#000");
+  g.addColorStop(0.42, "#030305");
+  g.addColorStop(0.72, hexToRgba(color, 0.18));
+  g.addColorStop(1, "rgba(0,0,0,0)");
+
+  ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.arc(x, y, 68 + pulse, 0, Math.PI * 2);
-  ctx.fillStyle = hexToRgba(activeState.color, 0.08);
+  ctx.arc(0, 0, 170 + pulse, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(x, y, 28 + pulse * 0.25, 0, Math.PI * 2);
-  ctx.fillStyle = hexToRgba(activeState.color, 0.55);
-  ctx.shadowBlur = 48;
-  ctx.shadowColor = activeState.color;
+  ctx.arc(0, 0, 42 + pulse * 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = "#000";
   ctx.fill();
-  ctx.shadowBlur = 0;
 
-  ctx.font = "600 13px Inter";
-  ctx.fillStyle = "rgba(244,239,229,0.76)";
-  ctx.textAlign = "center";
-  ctx.fillText(activeState.name.toUpperCase(), x, y + 92);
+  ctx.beginPath();
+  ctx.arc(0, 0, 54 + pulse, 0, Math.PI * 2);
+  ctx.strokeStyle = hexToRgba(color, 0.32);
+  ctx.lineWidth = 1;
+  ctx.stroke();
 }
 
 function hexToRgba(hex, alpha) {
   const clean = hex.replace("#", "");
   const bigint = parseInt(clean, 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
+  const r = bigint >> 16 & 255;
+  const g = bigint >> 8 & 255;
   const b = bigint & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function enterWeb(state = activeState) {
-  setActiveState(state);
-  hero.classList.add("hidden");
-  web.classList.add("active");
+function noiseLike(seed, time) {
+  return (Math.sin(seed * 12.9898 + time * 78.233) * 43758.5453) % 1 * 0.5 + 0.5;
 }
 
-function exitWeb() {
-  web.classList.remove("active");
-  hero.classList.remove("hidden");
-}
-
-function setActiveState(state) {
-  activeState = state;
-
-  title.textContent = state.name;
-  desc.textContent = state.description;
-  perceptual.textContent = state.perceptual;
-  cognitive.textContent = state.cognitive;
-  emotion.textContent = state.emotion;
-  progression.textContent = state.progression;
-
-  document.documentElement.style.setProperty("--active", state.color);
-}
-
-function findState(query) {
-  const clean = query.trim().toLowerCase();
-
-  return (
-    states.find(s => s.name.toLowerCase() === clean) ||
-    states.find(s => s.name.toLowerCase().includes(clean)) ||
-    states[0]
-  );
-}
-
-function renderSuggestions() {
-  suggestions.innerHTML = "";
-  nodeDock.innerHTML = "";
-
-  states.forEach(state => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.textContent = state.name;
-    chip.addEventListener("click", () => enterWeb(state));
-    suggestions.appendChild(chip);
-
-    const dockButton = document.createElement("button");
-    dockButton.type = "button";
-    dockButton.textContent = state.name;
-    dockButton.addEventListener("click", () => setActiveState(state));
-    nodeDock.appendChild(dockButton);
-  });
-}
-
-form.addEventListener("submit", event => {
-  event.preventDefault();
-  enterWeb(findState(input.value));
-});
-
-pupil.addEventListener("click", () => {
-  enterWeb(findState(input.value || "Sensory Amplification"));
-});
-
-backButton.addEventListener("click", exitWeb);
-
-window.addEventListener("mousemove", event => {
-  mouse.x = event.clientX;
-  mouse.y = event.clientY;
-
-  const iris = document.getElementById("iris");
-  const x = (event.clientX / window.innerWidth - 0.5) * 8;
-  const y = (event.clientY / window.innerHeight - 0.5) * 8;
-
-  iris.style.marginLeft = `${x}px`;
-  iris.style.marginTop = `${y}px`;
-});
-
-renderSuggestions();
-createParticles();
-drawWeb();
+drawEye();
+drawArchive();
