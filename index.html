@@ -631,100 +631,461 @@
     
     .state-panel {
       position: absolute;
-      left: clamp(22px, 4vw, 54px);
-      bottom: clamp(22px, 4vw, 44px);
-      width: min(560px, calc(100vw - 42px));
-      padding: 22px 22px 18px;
-      border-radius: 24px;
-      background:
-        linear-gradient(180deg,
-          rgba(255,255,255,0.08) 0%,
-          rgba(255,255,255,0.03) 42%,
-          rgba(0,0,0,0.24) 100%
-        );
-      border: 1px solid rgba(239, 235, 224, 0.08);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.18),
-        inset 0 -1px 0 rgba(0,0,0,0.34),
-        0 24px 90px rgba(0,0,0,0.42),
-        0 0 42px rgba(125,241,255,0.06);
-      backdrop-filter: blur(28px) saturate(1.18);
-      -webkit-backdrop-filter: blur(28px) saturate(1.18);
+      left: clamp(18px, 3vw, 44px);
+      top: clamp(52px, 8vh, 96px);
+      bottom: auto;
+      width: min(500px, 39vw);
+      padding: 0;
+      background: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       opacity: 0;
-      transform: translate3d(0, 28px, 0) scale(0.985);
+      transform: translate3d(-10px, 18px, 0) rotate(-0.6deg);
+      transform-origin: left top;
       transition:
-        opacity 900ms var(--ease),
-        transform 1100ms var(--ease),
-        box-shadow 1100ms var(--ease);
+        opacity 1300ms var(--ease),
+        transform 1500ms var(--ease),
+        filter 1500ms var(--ease);
+      filter: blur(0.25px);
+      pointer-events: none;
     }
     
     .state-panel__eyebrow {
-      margin-bottom: 10px;
-      color: rgba(239, 235, 224, 0.42);
-      font-size: 0.66rem;
-      letter-spacing: 0.26em;
+      margin: 0 0 12px;
+      color: rgba(239, 235, 224, 0.28);
+      font-size: 0.7rem;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
+      transform: translateX(2px) rotate(-0.9deg);
+      opacity: 0.72;
     }
     
     .state-panel__title {
-      margin: 0 0 10px;
+      margin: 0 0 18px;
       color: rgba(239, 235, 224, 0.94);
-      font-size: clamp(1.45rem, 2.8vw, 2.2rem);
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      line-height: 1;
+      font-size: clamp(1.9rem, 3vw, 3.2rem);
+      font-weight: 300;
+      letter-spacing: -0.018em;
+      line-height: 0.96;
+      max-width: 12ch;
+      transform: rotate(-1.1deg);
+      text-shadow:
+        0 0 10px rgba(239,235,224,0.05),
+        0 0 28px rgba(125,241,255,0.05);
     }
     
     .state-panel__body {
-      margin: 0 0 18px;
-      color: rgba(239, 235, 224, 0.74);
-      font-size: 0.92rem;
-      line-height: 1.62;
-      max-width: 60ch;
+      margin: 0 0 24px;
+      color: rgba(239, 235, 224, 0.48);
+      font-size: 0.94rem;
+      line-height: 1.92;
+      max-width: 31ch;
+      transform: translateX(12px) rotate(0.55deg);
     }
     
     .state-panel__grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin: 0;
     }
     
     .state-card {
-      min-height: 110px;
-      padding: 14px 14px 13px;
-      border-radius: 18px;
-      background:
-        linear-gradient(180deg,
-          rgba(255,255,255,0.045) 0%,
-          rgba(255,255,255,0.014) 100%
-        );
-      border: 1px solid rgba(239, 235, 224, 0.07);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.08),
-        0 10px 34px rgba(0,0,0,0.18);
+      position: relative;
+      min-height: 0;
+      padding: 0;
+      background: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    
+    .state-card:nth-child(1) {
+      transform: translate3d(24px, 0, 0) rotate(-0.6deg);
+    }
+    
+    .state-card:nth-child(2) {
+      transform: translate3d(4px, 0, 0) rotate(0.8deg);
+    }
+    
+    .state-card:nth-child(3) {
+      transform: translate3d(34px, 0, 0) rotate(-0.35deg);
+    }
+    
+    .state-card:nth-child(4) {
+      transform: translate3d(14px, 0, 0) rotate(0.9deg);
     }
     
     .state-card__label {
-      margin-bottom: 8px;
-      color: rgba(239, 235, 224, 0.42);
+      margin: 0 0 8px;
+      color: rgba(239, 235, 224, 0.26);
       font-size: 0.62rem;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.24em;
       text-transform: uppercase;
+      line-height: 1.4;
     }
     
     .state-card__value {
       margin: 0;
-      color: rgba(239, 235, 224, 0.68);
-      font-size: 0.83rem;
-      line-height: 1.5;
+      color: rgba(239, 235, 224, 0.42);
+      font-size: 0.86rem;
+      line-height: 1.86;
+      max-width: 32ch;
     }
     
     .state-panel__hint {
-      margin-top: 14px;
-      color: rgba(239, 235, 224, 0.32);
-      font-size: 0.58rem;
-      letter-spacing: 0.22em;
+      margin-top: 22px;
+      color: rgba(239, 235, 224, 0.16);
+      font-size: 0.54rem;
+      letter-spacing: 0.24em;
       text-transform: uppercase;
+      transform: translateX(22px) rotate(-0.4deg);
+    }
+    
+    /* ghost text system */
+    
+    .state-panel__eyebrow,
+    .state-panel__title,
+    .state-panel__body,
+    .state-card__label,
+    .state-card__value,
+    .state-panel__hint {
+      position: relative;
+      white-space: normal;
+      word-break: keep-all;
+    }
+    
+    .drift-word {
+      display: inline-flex;
+      align-items: baseline;
+      position: relative;
+      margin-right: 0.34em;
+      transform:
+        translate3d(var(--word-x, 0px), var(--word-y, 0px), 0)
+        rotate(var(--word-r, 0deg));
+      opacity: var(--word-o, 1);
+      will-change: transform, opacity, filter;
+      animation:
+        driftWord var(--word-dur, 9s) ease-in-out infinite alternate,
+        fadeWord var(--word-fade, 15s) ease-in-out infinite alternate;
+      animation-delay:
+        var(--word-delay, 0s),
+        calc(var(--word-delay, 0s) * -0.7);
+    }
+    
+    .drift-char {
+      display: inline-block;
+      transform:
+        translate3d(var(--char-x, 0px), var(--char-y, 0px), 0)
+        rotate(var(--char-r, 0deg));
+      opacity: var(--char-o, 1);
+      will-change: transform, opacity, filter;
+      animation:
+        driftChar var(--char-dur, 4.8s) ease-in-out infinite alternate,
+        sinkChar var(--char-sink, 8.2s) ease-in-out infinite alternate;
+      animation-delay:
+        var(--char-delay, 0s),
+        calc(var(--char-delay, 0s) * -0.5);
+    }
+    
+    @keyframes driftWord {
+      0% {
+        transform:
+          translate3d(var(--word-x, 0px), var(--word-y, 0px), 0)
+          rotate(var(--word-r, 0deg));
+        filter: blur(0px);
+      }
+    
+      100% {
+        transform:
+          translate3d(
+            calc(var(--word-x, 0px) + var(--word-x2, 0px)),
+            calc(var(--word-y, 0px) + var(--word-y2, 0px)),
+            0
+          )
+          rotate(calc(var(--word-r, 0deg) + var(--word-r2, 0deg)));
+        filter: blur(var(--word-blur, 0.18px));
+      }
+    }
+    
+    @keyframes fadeWord {
+      0% {
+        opacity: var(--word-o, 1);
+      }
+    
+      100% {
+        opacity: calc(var(--word-o, 1) * 0.68);
+      }
+    }
+    
+    @keyframes driftChar {
+      0% {
+        transform:
+          translate3d(var(--char-x, 0px), var(--char-y, 0px), 0)
+          rotate(var(--char-r, 0deg));
+      }
+    
+      100% {
+        transform:
+          translate3d(
+            calc(var(--char-x, 0px) + var(--char-x2, 0px)),
+            calc(var(--char-y, 0px) + var(--char-y2, 0px)),
+            0
+          )
+          rotate(calc(var(--char-r, 0deg) + var(--char-r2, 0deg)));
+      }
+    }
+    
+    @keyframes sinkChar {
+      0% {
+        opacity: var(--char-o, 1);
+        filter: blur(0px);
+      }
+    
+      100% {
+        opacity: calc(var(--char-o, 1) * 0.74);
+        filter: blur(var(--char-blur, 0.22px));
+      }
+    }
+
+    /* -------------------------------- */
+    /* HAUNTED ARCHIVE TYPOGRAPHY       */
+    /* -------------------------------- */
+    
+    .state-panel {
+      perspective: 900px;
+    }
+    
+    .state-panel__eyebrow,
+    .state-panel__title,
+    .state-panel__body,
+    .state-card,
+    .state-panel__hint {
+      opacity: 0;
+      will-change: opacity, transform, filter;
+    }
+    
+    .iris-home.loop-phase-panel .state-panel__eyebrow {
+      animation: archiveTextRise 1800ms var(--ease) 120ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-panel__title {
+      animation: archiveTitleRise 2100ms var(--ease) 260ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-panel__body {
+      animation: archiveTextRise 2300ms var(--ease) 520ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-card:nth-child(1) {
+      animation: archiveTextRise 2200ms var(--ease) 840ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-card:nth-child(2) {
+      animation: archiveTextRise 2200ms var(--ease) 1080ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-card:nth-child(3) {
+      animation: archiveTextRise 2200ms var(--ease) 1320ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-card:nth-child(4) {
+      animation: archiveTextRise 2200ms var(--ease) 1560ms forwards;
+    }
+    
+    .iris-home.loop-phase-panel .state-panel__hint {
+      animation: archiveTextRise 1800ms var(--ease) 1900ms forwards;
+    }
+    
+    @keyframes archiveTextRise {
+      0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform:
+          translate3d(-18px, 28px, -80px)
+          rotate(-2.4deg)
+          scale(0.965);
+      }
+    
+      42% {
+        opacity: 0.38;
+        filter: blur(3px);
+      }
+    
+      100% {
+        opacity: 1;
+        filter: blur(0.16px);
+      }
+    }
+    
+    @keyframes archiveTitleRise {
+      0% {
+        opacity: 0;
+        filter: blur(18px);
+        transform:
+          translate3d(-28px, 36px, -120px)
+          rotate(-3.8deg)
+          scale(0.94);
+      }
+    
+      46% {
+        opacity: 0.48;
+        filter: blur(4px);
+      }
+    
+      100% {
+        opacity: 1;
+        filter:
+          blur(0px)
+          drop-shadow(0 0 18px rgba(239,235,224,0.045))
+          drop-shadow(0 0 48px rgba(125,241,255,0.035));
+      }
+    }
+    
+    /* The title holds together more than the rest */
+    .state-panel__title .drift-word {
+      animation-duration: 13s, 19s;
+    }
+    
+    .state-panel__title .drift-char {
+      text-shadow:
+        0 0 8px rgba(239,235,224,0.16),
+        0 0 22px rgba(125,241,255,0.12),
+        0 0 58px rgba(255,90,70,0.08);
+    }
+    
+    /* Body and values feel submerged */
+    .state-panel__body .drift-word,
+    .state-card__value .drift-word {
+      animation:
+        driftWord var(--word-dur, 9s) ease-in-out infinite alternate,
+        fadeWord var(--word-fade, 15s) ease-in-out infinite alternate,
+        drownedWord 12s ease-in-out infinite alternate;
+      animation-delay:
+        var(--word-delay, 0s),
+        calc(var(--word-delay, 0s) * -0.7),
+        calc(var(--word-delay, 0s) * -0.34);
+    }
+    
+    .state-panel__body .drift-char,
+    .state-card__value .drift-char {
+      animation:
+        driftChar var(--char-dur, 4.8s) ease-in-out infinite alternate,
+        sinkChar var(--char-sink, 8.2s) ease-in-out infinite alternate,
+        microBlur var(--blur-dur, 10s) ease-in-out infinite alternate;
+      animation-delay:
+        var(--char-delay, 0s),
+        calc(var(--char-delay, 0s) * -0.5),
+        calc(var(--char-delay, 0s) * -0.22);
+    }
+    
+    @keyframes drownedWord {
+      0% {
+        filter:
+          blur(0px)
+          drop-shadow(0 0 0 rgba(239,235,224,0));
+      }
+    
+      52% {
+        filter:
+          blur(0.1px)
+          drop-shadow(0 0 6px rgba(239,235,224,0.025));
+      }
+    
+      100% {
+        filter:
+          blur(var(--word-drown-blur, 0.32px))
+          drop-shadow(0 0 14px rgba(255,90,70,0.035));
+      }
+    }
+    
+    @keyframes microBlur {
+      0% {
+        filter: blur(0px);
+      }
+    
+      38% {
+        filter: blur(0px);
+      }
+    
+      47% {
+        filter: blur(var(--pulse-blur, 0.36px));
+      }
+    
+      56% {
+        filter: blur(0px);
+      }
+    
+      100% {
+        filter: blur(var(--char-blur, 0.18px));
+      }
+    }
+    
+    /* End-of-line / late-word drowning */
+    .drift-word.word-distant {
+      opacity: calc(var(--word-o, 1) * 0.72);
+      filter: blur(0.24px);
+    }
+    
+    .drift-word.word-distant .drift-char {
+      opacity: calc(var(--char-o, 1) * 0.78);
+    }
+    
+    .drift-word.word-faint {
+      opacity: calc(var(--word-o, 1) * 0.5);
+      filter: blur(0.48px);
+    }
+    
+    .drift-word.word-faint .drift-char {
+      opacity: calc(var(--char-o, 1) * 0.62);
+    }
+    
+    /* Labels look like quiet archive markings */
+    .state-card__label .drift-char,
+    .state-panel__eyebrow .drift-char,
+    .state-panel__hint .drift-char {
+      text-shadow:
+        0 0 6px rgba(239,235,224,0.06),
+        0 0 18px rgba(125,241,255,0.035);
+    }
+    
+    /* Each informational section exists at a slightly different depth */
+    .state-card:nth-child(1) {
+      filter: blur(0.03px);
+    }
+    
+    .state-card:nth-child(2) {
+      filter: blur(0.11px);
+    }
+    
+    .state-card:nth-child(3) {
+      filter: blur(0.18px);
+    }
+    
+    .state-card:nth-child(4) {
+      filter: blur(0.08px);
+    }
+    
+    /* Give the red Loop state a subtle textual heat-haze */
+    .iris-home.loop-phase-panel .state-panel {
+      animation: archivePanelDrift 18s ease-in-out infinite alternate;
+    }
+    
+    @keyframes archivePanelDrift {
+      0% {
+        filter: blur(0.14px);
+      }
+    
+      48% {
+        filter: blur(0.28px);
+      }
+    
+      100% {
+        filter: blur(0.18px);
+      }
     }
     
     /* LOOP activation */
@@ -768,7 +1129,7 @@
     
     .iris-home.loop-phase-panel .state-panel {
       opacity: 1;
-      transform: translate3d(0, 0, 0) scale(1);
+      transform: translate3d(0, 0, 0) rotate(-0.35deg);
     }
     
     .iris-home.loop-active .edge-dimension {
@@ -796,19 +1157,30 @@
     
     @media (max-width: 900px) {
       .state-panel {
-        width: min(620px, calc(100vw - 26px));
-        left: 13px;
-        right: 13px;
-        bottom: 13px;
-        padding: 18px 16px 16px;
+        width: min(86vw, 460px);
+        left: 14px;
+        top: clamp(46px, 8vh, 72px);
+        right: auto;
+        bottom: auto;
+        filter: blur(0.18px);
       }
     
-      .state-panel__grid {
-        grid-template-columns: 1fr;
+      .state-panel__title {
+        font-size: clamp(1.6rem, 7vw, 2.4rem);
+        max-width: 11ch;
       }
     
-      .state-card {
-        min-height: auto;
+      .state-panel__body,
+      .state-card__value {
+        max-width: 30ch;
+        font-size: 0.86rem;
+      }
+    
+      .state-card:nth-child(1),
+      .state-card:nth-child(2),
+      .state-card:nth-child(3),
+      .state-card:nth-child(4) {
+        transform: none;
       }
     }
 
@@ -1543,11 +1915,27 @@
       pauseAndResetVideo(loopTransitionVideo);
       pauseAndResetVideo(loopLoopVideo);
     
+      resetStatePanelAnimation();
+    
       input.value = "";
       renderLetters("");
       setWhisper("");
     
       focusPortalSoon();
+    }
+    
+    function resetStatePanelAnimation() {
+      if (!statePanel) return;
+    
+      const animatedItems = statePanel.querySelectorAll(
+        ".state-panel__eyebrow, .state-panel__title, .state-panel__body, .state-card, .state-panel__hint"
+      );
+    
+      animatedItems.forEach((item) => {
+        item.style.animation = "none";
+        void item.offsetWidth;
+        item.style.animation = "";
+      });
     }
     
     function populateStatePanel(entry) {
@@ -1558,6 +1946,201 @@
       stateSubstances.textContent = entry.substances || "";
       stateMarkers.textContent = entry.markers || "";
       stateGrounding.textContent = entry.grounding || "";
+    
+      stylizeStatePanelText();
+    }
+
+    function stylizeStatePanelText() {
+      const targets = [
+        { el: stateEyebrow, type: "eyebrow" },
+        { el: stateTitle, type: "title" },
+        { el: stateBody, type: "body" },
+        { el: stateTriggers.previousElementSibling, type: "label" },
+        { el: stateTriggers, type: "value" },
+        { el: stateSubstances.previousElementSibling, type: "label" },
+        { el: stateSubstances, type: "value" },
+        { el: stateMarkers.previousElementSibling, type: "label" },
+        { el: stateMarkers, type: "value" },
+        { el: stateGrounding.previousElementSibling, type: "label" },
+        { el: stateGrounding, type: "value" },
+        { el: statePanel.querySelector(".state-panel__hint"), type: "hint" }
+      ];
+    
+      targets.forEach((item, blockIndex) => {
+        if (!item.el) return;
+    
+        const raw = item.el.textContent || "";
+        item.el.innerHTML = "";
+    
+        const fragment = buildDriftText(raw, `${item.type}-${blockIndex}`, item.type);
+        item.el.appendChild(fragment);
+      });
+    }
+    
+    function buildDriftText(text, key, type) {
+      const fragment = document.createDocumentFragment();
+      const words = String(text || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(" ");
+    
+      words.forEach((word, wordIndex) => {
+        if (!word) return;
+    
+        const wordSeed = hash(`${key}-word-${wordIndex}-${word}`);
+        const wordSpan = document.createElement("span");
+    
+        const distanceClass = getWordDistanceClass(type, wordIndex, words.length, wordSeed);
+    
+        wordSpan.className = `drift-word ${distanceClass}`;
+    
+        const wordProfile = getWordProfile(type, wordSeed, wordIndex);
+    
+        wordSpan.style.setProperty("--word-x", `${wordProfile.x1.toFixed(2)}px`);
+        wordSpan.style.setProperty("--word-y", `${wordProfile.y1.toFixed(2)}px`);
+        wordSpan.style.setProperty("--word-x2", `${wordProfile.x2.toFixed(2)}px`);
+        wordSpan.style.setProperty("--word-y2", `${wordProfile.y2.toFixed(2)}px`);
+        wordSpan.style.setProperty("--word-r", `${wordProfile.r1.toFixed(2)}deg`);
+        wordSpan.style.setProperty("--word-r2", `${wordProfile.r2.toFixed(2)}deg`);
+        wordSpan.style.setProperty("--word-o", `${wordProfile.o.toFixed(3)}`);
+        wordSpan.style.setProperty("--word-dur", `${wordProfile.d1.toFixed(2)}s`);
+        wordSpan.style.setProperty("--word-fade", `${wordProfile.d2.toFixed(2)}s`);
+        wordSpan.style.setProperty("--word-delay", `${wordProfile.delay.toFixed(2)}s`);
+        wordSpan.style.setProperty("--word-blur", `${wordProfile.blur.toFixed(2)}px`);
+        wordSpan.style.setProperty("--word-drown-blur", `${wordProfile.drownBlur.toFixed(2)}px`);
+        
+        const chars = [...word];
+    
+        chars.forEach((char, charIndex) => {
+          const charSeed = hash(`${key}-word-${wordIndex}-char-${charIndex}-${char}`);
+          const charSpan = document.createElement("span");
+          charSpan.className = "drift-char";
+          charSpan.textContent = char;
+    
+          const charProfile = getCharProfile(type, charSeed, charIndex);
+    
+          charSpan.style.setProperty("--char-x", `${charProfile.x1.toFixed(2)}px`);
+          charSpan.style.setProperty("--char-y", `${charProfile.y1.toFixed(2)}px`);
+          charSpan.style.setProperty("--char-x2", `${charProfile.x2.toFixed(2)}px`);
+          charSpan.style.setProperty("--char-y2", `${charProfile.y2.toFixed(2)}px`);
+          charSpan.style.setProperty("--char-r", `${charProfile.r1.toFixed(2)}deg`);
+          charSpan.style.setProperty("--char-r2", `${charProfile.r2.toFixed(2)}deg`);
+          charSpan.style.setProperty("--char-o", `${charProfile.o.toFixed(3)}`);
+          charSpan.style.setProperty("--char-dur", `${charProfile.d1.toFixed(2)}s`);
+          charSpan.style.setProperty("--char-sink", `${charProfile.d2.toFixed(2)}s`);
+          charSpan.style.setProperty("--char-delay", `${charProfile.delay.toFixed(2)}s`);
+          charSpan.style.setProperty("--char-blur", `${charProfile.blur.toFixed(2)}px`);
+          charSpan.style.setProperty("--pulse-blur", `${charProfile.pulseBlur.toFixed(2)}px`);
+          charSpan.style.setProperty("--blur-dur", `${charProfile.blurDur.toFixed(2)}s`);
+          
+          wordSpan.appendChild(charSpan);
+        });
+    
+        fragment.appendChild(wordSpan);
+    
+        if (wordIndex < words.length - 1) {
+          fragment.appendChild(document.createTextNode(" "));
+        }
+      });
+    
+      return fragment;
+    }
+    
+      function getWordProfile(type, seed, index) {
+      const a = pseudo(seed + 11);
+      const b = pseudo(seed + 23);
+      const c = pseudo(seed + 41);
+      const d = pseudo(seed + 59);
+      const e = pseudo(seed + 83);
+      const f = pseudo(seed + 101);
+      const g = pseudo(seed + 137);
+    
+      const profileMap = {
+        eyebrow: { spreadX: 2.4, spreadY: 1.4, rot: 1.1, opacity: 0.62, blur: 0.10, drown: 0.18 },
+        title:   { spreadX: 3.3, spreadY: 1.8, rot: 1.3, opacity: 0.96, blur: 0.06, drown: 0.12 },
+        body:    { spreadX: 4.2, spreadY: 3.1, rot: 1.4, opacity: 0.66, blur: 0.18, drown: 0.42 },
+        label:   { spreadX: 2.4, spreadY: 1.5, rot: 1.1, opacity: 0.38, blur: 0.12, drown: 0.24 },
+        value:   { spreadX: 4.6, spreadY: 3.4, rot: 1.55, opacity: 0.57, blur: 0.2, drown: 0.48 },
+        hint:    { spreadX: 1.8, spreadY: 1.2, rot: 0.7, opacity: 0.2, blur: 0.2, drown: 0.34 }
+      };
+    
+      const p = profileMap[type] || profileMap.body;
+    
+      const driftDepth = 1 + index * 0.006;
+    
+      return {
+        x1: (a - 0.5) * p.spreadX * driftDepth,
+        y1: (b - 0.5) * p.spreadY * driftDepth,
+        x2: (c - 0.5) * p.spreadX * 1.25,
+        y2: (d - 0.5) * p.spreadY * 1.18,
+        r1: (e - 0.5) * p.rot,
+        r2: (f - 0.5) * p.rot * 1.25,
+        o: p.opacity * (0.88 + a * 0.2),
+        d1: 8.8 + b * 8.5 + index * 0.05,
+        d2: 13.5 + c * 10.2,
+        delay: -(d * 11.5),
+        blur: p.blur + e * 0.09,
+        drownBlur: p.drown + g * 0.28
+      };
+    }
+    
+    function getCharProfile(type, seed, index) {
+      const a = pseudo(seed + 7);
+      const b = pseudo(seed + 19);
+      const c = pseudo(seed + 31);
+      const d = pseudo(seed + 47);
+      const e = pseudo(seed + 61);
+      const f = pseudo(seed + 79);
+      const g = pseudo(seed + 97);
+      const h = pseudo(seed + 113);
+    
+      const profileMap = {
+        eyebrow: { spreadX: 0.38, spreadY: 0.26, rot: 0.62, opacity: 0.9, blur: 0.05, pulse: 0.22 },
+        title:   { spreadX: 0.56, spreadY: 0.38, rot: 0.9,  opacity: 1.0, blur: 0.04, pulse: 0.18 },
+        body:    { spreadX: 0.76, spreadY: 0.68, rot: 1.25, opacity: 0.88, blur: 0.1,  pulse: 0.38 },
+        label:   { spreadX: 0.38, spreadY: 0.26, rot: 0.7,  opacity: 0.82, blur: 0.07, pulse: 0.24 },
+        value:   { spreadX: 0.82, spreadY: 0.72, rot: 1.35, opacity: 0.86, blur: 0.12, pulse: 0.44 },
+        hint:    { spreadX: 0.28, spreadY: 0.2,  rot: 0.52, opacity: 0.72, blur: 0.1,  pulse: 0.32 }
+      };
+    
+      const p = profileMap[type] || profileMap.body;
+    
+      return {
+        x1: (a - 0.5) * p.spreadX,
+        y1: (b - 0.5) * p.spreadY,
+        x2: (c - 0.5) * p.spreadX * 1.32,
+        y2: (d - 0.5) * p.spreadY * 1.28,
+        r1: (e - 0.5) * p.rot,
+        r2: (f - 0.5) * p.rot * 1.45,
+        o: p.opacity * (0.88 + a * 0.1),
+        d1: 4.2 + b * 3.4 + index * 0.018,
+        d2: 7.4 + c * 4.8,
+        delay: -(d * 6.2),
+        blur: p.blur + e * 0.08,
+        pulseBlur: p.pulse + g * 0.26,
+        blurDur: 8.5 + h * 8.2
+      };
+    }
+
+    function getWordDistanceClass(type, index, total, seed) {
+      if (type === "title") return "";
+    
+      const position = total <= 1 ? 0 : index / (total - 1);
+      const random = pseudo(seed + 211);
+    
+      if (type === "body" || type === "value") {
+        if (position > 0.78 && random > 0.25) return "word-faint";
+        if (position > 0.56 && random > 0.38) return "word-distant";
+        if (random > 0.91) return "word-faint";
+        if (random > 0.78) return "word-distant";
+      }
+    
+      if (type === "label" || type === "eyebrow" || type === "hint") {
+        if (random > 0.84) return "word-faint";
+        if (random > 0.68) return "word-distant";
+      }
+    
+      return "";
     }
     
     function safePlay(videoElement, label) {
