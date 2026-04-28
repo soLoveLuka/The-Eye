@@ -2,18 +2,585 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+
   <meta name="theme-color" content="#000000" />
-  <meta name="description" content="Iris Archive — a private cinematic gateway for altered-state exploration." />
+
   <title>Iris Archive</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    :root {
+      --bone: rgba(239, 235, 224, 0.88);
+      --bone-soft: rgba(239, 235, 224, 0.42);
+      --bone-faint: rgba(239, 235, 224, 0.14);
+      --cyan: rgba(130, 241, 255, 0.34);
+      --cyan-soft: rgba(130, 241, 255, 0.15);
+      --black: #000;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden !important;
+      background: #000;
+      color: var(--bone);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+
+    .iris-home {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      isolation: isolate;
+      background: #000;
+    }
+
+    .video-stage {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .eye-video {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 100vw;
+      height: 100dvh;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      transform: translate3d(-50%, -50%, 0) scale(1.065);
+      filter:
+        brightness(0.76)
+        contrast(1.16)
+        saturate(1.12);
+      opacity: 0;
+      transition:
+        opacity 1800ms var(--ease),
+        transform 1800ms var(--ease),
+        filter 1800ms var(--ease);
+      animation: eyeBreath 18s var(--ease) infinite alternate;
+      will-change: transform, filter;
+    }
+
+    .loaded .eye-video {
+      opacity: 1;
+    }
+
+    @keyframes eyeBreath {
+      0% {
+        transform: translate3d(-50.2%, -50.1%, 0) scale(1.055);
+        filter: brightness(0.72) contrast(1.14) saturate(1.08);
+      }
+
+      50% {
+        transform: translate3d(-49.9%, -50.25%, 0) scale(1.083);
+        filter: brightness(0.79) contrast(1.18) saturate(1.16);
+      }
+
+      100% {
+        transform: translate3d(-50.35%, -49.85%, 0) scale(1.1);
+        filter: brightness(0.82) contrast(1.2) saturate(1.2);
+      }
+    }
+
+    .fallback {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 53% 52%,
+          #000 0%,
+          #000 13%,
+          rgba(15, 35, 42, 0.96) 20%,
+          rgba(92, 185, 202, 0.26) 34%,
+          rgba(5, 16, 20, 0.95) 58%,
+          #000 100%
+        );
+      transition: opacity 900ms ease;
+    }
+
+    .failed .fallback {
+      z-index: 0;
+      opacity: 1;
+    }
+
+    .vignette,
+    .fog,
+    .bloom,
+    .glass,
+    .grain,
+    .depth {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .vignette {
+      z-index: 2;
+      background:
+        radial-gradient(circle at 50% 50%,
+          transparent 0%,
+          transparent 31%,
+          rgba(0,0,0,0.13) 49%,
+          rgba(0,0,0,0.66) 78%,
+          rgba(0,0,0,0.96) 100%
+        ),
+        linear-gradient(to bottom,
+          rgba(0,0,0,0.48) 0%,
+          transparent 28%,
+          transparent 62%,
+          rgba(0,0,0,0.58) 100%
+        );
+    }
+
+    .fog {
+      z-index: 3;
+      inset: -14%;
+      opacity: 0.9;
+      filter: blur(28px);
+      mix-blend-mode: screen;
+      background:
+        radial-gradient(ellipse at 50% 50%,
+          transparent 0%,
+          transparent 39%,
+          rgba(175, 228, 235, 0.04) 57%,
+          rgba(210, 238, 240, 0.12) 74%,
+          transparent 100%
+        ),
+        radial-gradient(circle at 5% 92%,
+          rgba(200, 235, 240, 0.16),
+          transparent 28%
+        ),
+        radial-gradient(circle at 96% 12%,
+          rgba(200, 235, 240, 0.12),
+          transparent 26%
+        ),
+        radial-gradient(circle at 50% 108%,
+          rgba(255,255,255,0.08),
+          transparent 36%
+        );
+      animation: fogMove 22s var(--ease) infinite alternate;
+    }
+
+    @keyframes fogMove {
+      from {
+        opacity: 0.64;
+        transform: translate3d(-1%, 0.5%, 0) scale(1.02);
+      }
+
+      to {
+        opacity: 0.98;
+        transform: translate3d(1%, -0.8%, 0) scale(1.07);
+      }
+    }
+
+    .bloom {
+      z-index: 4;
+      mix-blend-mode: screen;
+      opacity: 0.76;
+      background:
+        radial-gradient(circle at 51% 49%,
+          transparent 0%,
+          transparent 23%,
+          rgba(130, 241, 255, 0.12) 36%,
+          transparent 49%
+        ),
+        radial-gradient(circle at 70% 35%,
+          rgba(255,255,255,0.08),
+          transparent 12%
+        );
+      animation: bloomPulse 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes bloomPulse {
+      from {
+        opacity: 0.48;
+        filter: blur(0);
+      }
+
+      to {
+        opacity: 0.9;
+        filter: blur(1.4px);
+      }
+    }
+
+    .glass {
+      z-index: 5;
+      opacity: 0.48;
+      mix-blend-mode: screen;
+      background:
+        linear-gradient(105deg,
+          transparent 0%,
+          rgba(255,255,255,0.015) 40%,
+          rgba(255,255,255,0.072) 48%,
+          rgba(255,255,255,0.016) 56%,
+          transparent 100%
+        );
+      transform: translateX(-12%);
+      animation: glassDrift 30s ease-in-out infinite alternate;
+    }
+
+    @keyframes glassDrift {
+      to {
+        transform: translateX(9%);
+        opacity: 0.68;
+      }
+    }
+
+    .grain {
+      z-index: 6;
+      opacity: 0.12;
+      mix-blend-mode: overlay;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 260 260' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.65'/%3E%3C/svg%3E");
+      animation: grainMove 4s steps(8) infinite;
+    }
+
+    @keyframes grainMove {
+      to {
+        transform: translate3d(-4%, 3%, 0);
+      }
+    }
+
+    .depth {
+      z-index: 7;
+      box-shadow:
+        inset 0 0 80px rgba(0,0,0,0.88),
+        inset 0 0 240px rgba(0,0,0,0.68);
+    }
+
+    .portal-search {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 20;
+      width: min(570px, 72vw);
+      height: 42px;
+      transform: translate3d(-50%, -50%, 0);
+      perspective: 1000px;
+    }
+
+    .search-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      animation: searchFloat 9s var(--ease) infinite alternate;
+    }
+
+    @keyframes searchFloat {
+      from {
+        transform: translate3d(0, 2px, 0) rotateX(4deg);
+      }
+
+      to {
+        transform: translate3d(0, -3px, 0) rotateX(0deg);
+      }
+    }
+
+    .search-shell::before {
+      content: "";
+      position: absolute;
+      inset: -34px -54px;
+      border-radius: 999px;
+      background:
+        radial-gradient(ellipse at 50% 50%,
+          rgba(130,241,255,0.18),
+          rgba(130,241,255,0.07) 32%,
+          rgba(255,255,255,0.025) 46%,
+          transparent 72%
+        );
+      filter: blur(25px);
+      opacity: 0.84;
+      transform: translateZ(-60px);
+      pointer-events: none;
+    }
+
+    .search-shell::after {
+      content: "";
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: -24px;
+      height: 26px;
+      border-radius: 50%;
+      background:
+        radial-gradient(ellipse at center,
+          rgba(0,0,0,0.72),
+          rgba(0,0,0,0.28) 44%,
+          transparent 76%
+        );
+      filter: blur(16px);
+      opacity: 0.82;
+      pointer-events: none;
+    }
+
+    .portal-input {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 42px;
+      border: 0;
+      outline: 0;
+      appearance: none;
+      border-radius: 999px;
+
+      color: var(--bone);
+      caret-color: rgba(220,250,255,0.96);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: 0.78rem;
+      font-weight: 300;
+
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.11) 0%,
+          rgba(255,255,255,0.045) 45%,
+          rgba(0,0,0,0.22) 100%
+        );
+
+      backdrop-filter: blur(26px) saturate(1.26);
+      -webkit-backdrop-filter: blur(26px) saturate(1.26);
+
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.28),
+        inset 0 -1px 0 rgba(0,0,0,0.58),
+        inset 0 0 0 1px rgba(239,235,224,0.14),
+        0 0 28px rgba(130,241,255,0.11),
+        0 24px 78px rgba(0,0,0,0.78);
+
+      transform: translateZ(34px) rotateX(2deg);
+
+      transition:
+        width 1000ms var(--ease),
+        height 1000ms var(--ease),
+        transform 1100ms var(--ease),
+        box-shadow 1000ms var(--ease),
+        background 1000ms var(--ease),
+        letter-spacing 900ms var(--ease);
+    }
+
+    .portal-input:focus {
+      width: 104%;
+      height: 44px;
+      letter-spacing: 0.27em;
+
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.15) 0%,
+          rgba(255,255,255,0.064) 48%,
+          rgba(0,0,0,0.27) 100%
+        );
+
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.38),
+        inset 0 -1px 0 rgba(0,0,0,0.62),
+        inset 0 0 0 1px rgba(239,235,224,0.25),
+        0 0 46px rgba(130,241,255,0.22),
+        0 0 120px rgba(130,241,255,0.08),
+        0 32px 110px rgba(0,0,0,0.86);
+
+      transform: translateZ(54px) rotateX(0deg) scale(1.012);
+    }
+
+    .search-line {
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      height: 1px;
+      z-index: 4;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg,
+          transparent,
+          rgba(239,235,224,0.28),
+          rgba(130,241,255,0.48),
+          rgba(239,235,224,0.28),
+          transparent
+        );
+      opacity: 0.34;
+      transition:
+        opacity 900ms var(--ease),
+        left 900ms var(--ease),
+        right 900ms var(--ease);
+    }
+
+    .search-line.top {
+      top: -7px;
+    }
+
+    .search-line.bottom {
+      bottom: -7px;
+      opacity: 0.18;
+    }
+
+    .search-shell:focus-within .search-line {
+      left: 4%;
+      right: 4%;
+      opacity: 0.64;
+    }
+
+    .whisper {
+      position: fixed;
+      left: 50%;
+      top: calc(50% + 48px);
+      z-index: 21;
+      transform: translateX(-50%) translateY(12px);
+      opacity: 0;
+      color: rgba(239,235,224,0.38);
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+      filter: blur(4px);
+      transition:
+        opacity 700ms var(--ease),
+        transform 700ms var(--ease),
+        filter 700ms var(--ease);
+    }
+
+    .whisper.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      filter: blur(0);
+    }
+
+    .searching .eye-video {
+      filter:
+        brightness(0.68)
+        contrast(1.22)
+        saturate(1.24)
+        hue-rotate(4deg);
+      transform: translate3d(-50%, -50%, 0) scale(1.125);
+    }
+
+    .denied .portal-input {
+      animation: deniedPulse 850ms var(--ease);
+    }
+
+    @keyframes deniedPulse {
+      0% {
+        transform: translateZ(54px) scale(1);
+      }
+
+      38% {
+        transform: translateZ(60px) scale(1.018);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,0.36),
+          inset 0 -1px 0 rgba(0,0,0,0.62),
+          inset 0 0 0 1px rgba(255,110,110,0.34),
+          0 0 46px rgba(255,70,70,0.18),
+          0 30px 110px rgba(0,0,0,0.86);
+      }
+
+      100% {
+        transform: translateZ(54px) scale(1);
+      }
+    }
+
+    @media (max-width: 700px) {
+      .portal-search {
+        width: min(390px, 74vw);
+        height: 39px;
+      }
+
+      .portal-input {
+        height: 39px;
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+      }
+
+      .portal-input:focus {
+        height: 41px;
+        letter-spacing: 0.2em;
+      }
+
+      .eye-video {
+        transform: translate3d(-50%, -50%, 0) scale(1.22);
+      }
+
+      .fog {
+        inset: -18%;
+        filter: blur(30px);
+      }
+
+      .whisper {
+        max-width: 84vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.56rem;
+      }
+    }
+
+    @media (min-aspect-ratio: 2 / 1) {
+      .eye-video {
+        transform: translate3d(-50%, -50%, 0) scale(1.03);
+      }
+    }
+
+    @media (max-aspect-ratio: 9 / 16) {
+      .eye-video {
+        transform: translate3d(-50%, -50%, 0) scale(1.28);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .eye-video,
+      .fog,
+      .bloom,
+      .glass,
+      .grain,
+      .search-shell {
+        animation: none !important;
+      }
+
+      .portal-input,
+      .search-line,
+      .whisper {
+        transition-duration: 120ms !important;
+      }
+    }
+
+    @supports not ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+      .portal-input {
+        background: rgba(4, 8, 10, 0.72);
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <main class="iris-origin" id="irisOrigin" aria-label="Iris Archive origin screen">
-    <section class="video-stage" aria-hidden="true">
+  <main class="iris-home" id="irisHome">
+    <div class="video-stage">
       <video
         class="eye-video"
         id="eyeVideo"
@@ -25,36 +592,265 @@
       >
         <source src="assets/eye-loop.mp4" type="video/mp4" />
       </video>
-      <div class="video-fallback" id="videoFallback"></div>
-    </section>
+    </div>
 
-    <div class="layer color-grade" aria-hidden="true"></div>
-    <div class="layer iris-breath" aria-hidden="true"></div>
-    <div class="layer edge-fog" aria-hidden="true"></div>
-    <div class="layer glass-sheen" aria-hidden="true"></div>
-    <div class="layer film-grain" aria-hidden="true"></div>
-    <div class="layer final-vignette" aria-hidden="true"></div>
+    <div class="fallback"></div>
 
-    <form class="search-portal" id="searchPortal" autocomplete="off">
-      <div class="dimensional-field" id="dimensionalField">
+    <div class="vignette"></div>
+    <div class="fog"></div>
+    <div class="bloom"></div>
+    <div class="glass"></div>
+    <div class="grain"></div>
+    <div class="depth"></div>
+
+    <form class="portal-search" id="portalSearch" autocomplete="off">
+      <div class="search-shell">
         <input
+          class="portal-input"
           id="portalInput"
           type="text"
-          aria-label="Enter archive code"
           autocomplete="off"
-          autocorrect="off"
-          autocapitalize="characters"
+          autocapitalize="off"
           spellcheck="false"
+          aria-label="Enter archive code"
         />
-        <span class="field-rail rail-top" aria-hidden="true"></span>
-        <span class="field-rail rail-bottom" aria-hidden="true"></span>
-        <span class="field-halo" aria-hidden="true"></span>
+
+        <div class="search-line top"></div>
+        <div class="search-line bottom"></div>
       </div>
     </form>
 
-    <p class="whisper" id="whisper" aria-live="polite"></p>
+    <div class="whisper" id="whisper" aria-live="polite"></div>
   </main>
 
-  <script src="app.js"></script>
+  <script>
+    "use strict";
+
+    const irisHome = document.getElementById("irisHome");
+    const video = document.getElementById("eyeVideo");
+    const form = document.getElementById("portalSearch");
+    const input = document.getElementById("portalInput");
+    const whisper = document.getElementById("whisper");
+
+    const CONTENT_REGISTRY = Object.freeze({
+      // Future documented codes go here.
+      // LOOP: { label: "Looping Thought" }
+    });
+
+    const debug = true;
+    let whisperTimer = null;
+
+    init();
+
+    function init() {
+      lockScroll();
+      prepareVideo();
+      bindEvents();
+      log("init", "Iris Archive single-file build active.");
+    }
+
+    function lockScroll() {
+      window.scrollTo(0, 0);
+
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.inset = "0";
+      document.body.style.width = "100%";
+      document.body.style.height = "100%";
+    }
+
+    function prepareVideo() {
+      if (!video) {
+        warn("video", "Video element missing.");
+        return;
+      }
+
+      video.addEventListener("loadeddata", () => {
+        irisHome.classList.add("loaded");
+        log("video", "loadeddata");
+      });
+
+      video.addEventListener("canplay", () => {
+        irisHome.classList.add("loaded");
+        playVideo("canplay");
+      });
+
+      video.addEventListener("error", () => {
+        irisHome.classList.add("failed");
+        warn("video-error", getVideoError());
+      });
+
+      video.addEventListener("stalled", () => {
+        warn("video-stalled", "Attempting to resume.");
+        playVideo("stalled");
+      });
+
+      playVideo("initial");
+
+      setTimeout(() => {
+        if (!irisHome.classList.contains("loaded")) {
+          warn("video-timeout", "Video not loaded yet. Check assets/eye-loop.mp4 path and filename case.");
+        }
+      }, 2400);
+    }
+
+    function bindEvents() {
+      form.addEventListener("submit", handleSubmit);
+
+      input.addEventListener("focus", () => {
+        irisHome.classList.add("searching");
+        setWhisper("");
+      });
+
+      input.addEventListener("blur", () => {
+        if (!input.value.trim()) {
+          irisHome.classList.remove("searching");
+        }
+      });
+
+      input.addEventListener("input", () => {
+        if (input.value.trim()) {
+          irisHome.classList.add("searching");
+        } else {
+          irisHome.classList.remove("searching");
+          setWhisper("");
+        }
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          playVideo("visibilitychange");
+        }
+      });
+
+      window.addEventListener("pageshow", () => {
+        playVideo("pageshow");
+        lockScroll();
+      });
+
+      window.addEventListener("resize", () => {
+        lockScroll();
+      });
+
+      window.addEventListener("error", (event) => {
+        warn("window-error", {
+          message: event.message,
+          source: event.filename,
+          line: event.lineno,
+          column: event.colno
+        });
+      });
+
+      window.addEventListener("unhandledrejection", (event) => {
+        warn("promise-rejection", event.reason);
+      });
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+
+      const code = normalize(input.value);
+
+      if (!code) {
+        deny("");
+        return;
+      }
+
+      const entry = CONTENT_REGISTRY[code];
+
+      if (!entry) {
+        deny("undocumented");
+        log("query-unmatched", code);
+        return;
+      }
+
+      setWhisper(entry.label || "documented");
+      log("query-matched", { code, entry });
+    }
+
+    function playVideo(reason) {
+      const attempt = video.play();
+
+      if (attempt && typeof attempt.catch === "function") {
+        attempt
+          .then(() => {
+            log("video-play", reason);
+          })
+          .catch((error) => {
+            warn("video-play-blocked", {
+              reason,
+              error: error?.message || error
+            });
+          });
+      }
+    }
+
+    function deny(message) {
+      irisHome.classList.remove("denied");
+      void irisHome.offsetWidth;
+      irisHome.classList.add("denied");
+
+      setWhisper(message);
+
+      setTimeout(() => {
+        irisHome.classList.remove("denied");
+      }, 850);
+    }
+
+    function setWhisper(message) {
+      clearTimeout(whisperTimer);
+
+      whisper.textContent = message || "";
+
+      if (!message) {
+        whisper.classList.remove("visible");
+        return;
+      }
+
+      whisper.classList.add("visible");
+
+      whisperTimer = setTimeout(() => {
+        whisper.classList.remove("visible");
+      }, 1800);
+    }
+
+    function normalize(value) {
+      return String(value || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+    }
+
+    function getVideoError() {
+      const error = video.error;
+
+      if (!error) {
+        return "Unknown video error.";
+      }
+
+      const map = {
+        1: "MEDIA_ERR_ABORTED",
+        2: "MEDIA_ERR_NETWORK",
+        3: "MEDIA_ERR_DECODE",
+        4: "MEDIA_ERR_SRC_NOT_SUPPORTED"
+      };
+
+      return {
+        code: error.code,
+        name: map[error.code] || "UNKNOWN",
+        message: error.message || null
+      };
+    }
+
+    function log(label, payload) {
+      if (!debug) return;
+      console.log(`[IRIS:${label}]`, payload);
+    }
+
+    function warn(label, payload) {
+      console.warn(`[IRIS:${label}]`, payload);
+    }
+  </script>
 </body>
 </html>
