@@ -204,29 +204,9 @@
       pointer-events: none;
     }
 
-    .anamorphic-aura {
-      z-index: 2;
-      mix-blend-mode: screen;
-      opacity: 0.72;
-      background:
-        radial-gradient(ellipse at calc(50% + var(--mx) * 5%) calc(50% + var(--my) * 5%),
-          transparent 0%,
-          transparent 27%,
-          rgba(125, 241, 255, 0.075) 38%,
-          rgba(155, 113, 255, 0.05) 46%,
-          transparent 57%
-        ),
-        linear-gradient(90deg,
-          transparent 0%,
-          rgba(255, 52, 72, 0.045) 18%,
-          transparent 34%,
-          transparent 66%,
-          rgba(75, 149, 255, 0.055) 82%,
-          transparent 100%
-        );
-      filter: blur(0.5px);
-      animation: auraShift 13s ease-in-out infinite alternate;
-    }
+.anamorphic-aura {
+  display: none;
+}
 
     @keyframes auraShift {
       from {
@@ -247,13 +227,6 @@
       filter: blur(24px);
       mix-blend-mode: screen;
       background:
-        radial-gradient(ellipse at 50% 50%,
-          transparent 0%,
-          transparent 36%,
-          rgba(125, 241, 255, 0.04) 54%,
-          rgba(239, 235, 224, 0.075) 70%,
-          rgba(0, 0, 0, 0) 100%
-        ),
         radial-gradient(circle at 2% 50%,
           var(--red-shift),
           transparent 31%
@@ -306,12 +279,6 @@
           rgba(180, 224, 255, 0.12),
           transparent 24%
         ),
-        radial-gradient(ellipse at 50% 50%,
-          transparent 0%,
-          transparent 43%,
-          rgba(215, 235, 238, 0.045) 63%,
-          transparent 84%
-        );
       animation: fogDrift 24s var(--silk) infinite alternate;
     }
 
@@ -325,22 +292,13 @@
       }
     }
 
-    .lens-curve {
-      z-index: 5;
-      box-shadow:
-        inset 0 0 70px rgba(0,0,0,0.86),
-        inset 0 0 180px rgba(0,0,0,0.72),
-        inset 0 0 340px rgba(0,0,0,0.52);
-      background:
-        radial-gradient(circle at 50% 50%,
-          transparent 0%,
-          transparent 26%,
-          rgba(255,255,255,0.018) 38%,
-          transparent 47%,
-          rgba(0,0,0,0.24) 76%,
-          rgba(0,0,0,0.74) 100%
-        );
-    }
+.lens-curve {
+  z-index: 5;
+  box-shadow:
+    inset 0 0 90px rgba(0,0,0,0.72),
+    inset 0 0 240px rgba(0,0,0,0.62);
+  background: none;
+}
 
     .glass-strike {
       z-index: 6;
@@ -403,24 +361,9 @@
         filter 900ms var(--ease);
     }
 
-    .portal::before {
-      content: "";
-      position: absolute;
-      width: min(330px, 48vw);
-      height: min(132px, 18vw);
-      border-radius: 50%;
-      background:
-        radial-gradient(ellipse at center,
-          rgba(0,0,0,0.34) 0%,
-          rgba(0,0,0,0.2) 32%,
-          rgba(125,241,255,0.055) 54%,
-          transparent 75%
-        );
-      filter: blur(19px);
-      opacity: 0.95;
-      transform: translateZ(-40px) scaleX(1.3);
-      animation: portalShadow 8s var(--silk) infinite alternate;
-    }
+.portal::before {
+  display: none;
+}
 
     @keyframes portalShadow {
       to {
