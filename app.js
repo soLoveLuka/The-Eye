@@ -1,80 +1,39 @@
 "use strict";
 
-/*
-  IRIS ARCHIVE — ORIGIN BUILD
-
-  Current purpose:
-  - Full-screen cinematic eye loop
-  - Ominous centered dimensional search
-  - Smooth video handling across devices
-  - Error logging
-  - Open-ended secret-code architecture
-
-  Future purpose:
-  - Codes can route to state-specific transformations
-  - Each state can modify video, color, audio, atmosphere, search behavior, archive copy, and page transitions
-*/
-
 const CONFIG = {
   debug: true,
-
+  videoTimeoutMs: 3200,
+  deniedMs: 900,
+  whisperMs: 1800,
   selectors: {
-    origin: "#origin",
+    origin: "#irisOrigin",
     video: "#eyeVideo",
     input: "#portalInput",
-    form: "#portalSearch",
-    searchShell: "#searchShell",
-    whisper: "#systemWhisper"
-  },
-
-  timing: {
-    whisper: 1800,
-    deniedClass: 900,
-    searchingMinimum: 900
+    form: "#searchPortal",
+    whisper: "#whisper"
   }
 };
 
-/*
-  FUTURE CONTENT REGISTRY
-
-  Do not implement your big secret-code ideas here yet.
-
-  Later, each key becomes something like:
-
-  LOOP: {
-    label: "Looping Thought",
-    route: "states/loop.html",
-    transform: "loop",
-    audio: "assets/audio/loop-bed.mp3",
-    colors: { ... },
-    onEnter() {}
-  }
-
-  Right now it stays intentionally empty.
-*/
-
 const CONTENT_REGISTRY = Object.freeze({
-  // PLACEHOLDER:
-  // Add future documented codes here.
+  // Future documented codes go here.
+  // LOOP: { label: "LOOP", route: "states/loop.html" }
 });
 
 const els = {};
-
-const state = {
+const runtime = {
   videoReady: false,
   videoFailed: false,
-  searching: false,
-  lastQuery: "",
-  idleTimer: null
+  whisperTimer: null
 };
 
-boot();
+init();
 
-function boot() {
+function init() {
   cacheElements();
+  verifyElements();
   bindEvents();
   prepareVideo();
-  log("boot", "Iris Archive initialized.");
+  log("init", "Iris Archive origin loaded.");
 }
 
 function cacheElements() {
@@ -82,34 +41,26 @@ function cacheElements() {
   els.video = document.querySelector(CONFIG.selectors.video);
   els.input = document.querySelector(CONFIG.selectors.input);
   els.form = document.querySelector(CONFIG.selectors.form);
-  els.searchShell = document.querySelector(CONFIG.selectors.searchShell);
   els.whisper = document.querySelector(CONFIG.selectors.whisper);
+}
 
-  const missing = Object.entries(els)
-    .filter(([, element]) => !element)
-    .map(([name]) => name);
-
-  if (missing.length) {
-    warn("missing-elements", missing);
-  }
+function verifyElements() {
+  Object.entries(els).forEach(([name, element]) => {
+    if (!element) warn("missing-element", name);
+  });
 }
 
 function bindEvents() {
-  if (els.form) {
-    els.form.addEventListener("submit", handleSubmit);
-  }
+  els.form?.addEventListener("submit", onSubmit);
+  els.input?.addEventListener("input", onInput);
+  els.input?.addEventListener("focus", onFocus);
+  els.input?.addEventListener("blur", onBlur);
 
-  if (els.input) {
-    els.input.addEventListener("input", handleInput);
-    els.input.addEventListener("focus", handleFocus);
-    els.input.addEventListener("blur", handleBlur);
-  }
-
-  document.addEventListener("visibilitychange", handleVisibility);
-
-  window.addEventListener("pageshow", () => {
-    resumeVideo("pageshow");
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) resumeVideo("visibilitychange");
   });
+
+  window.addEventListener("pageshow", () => resumeVideo("pageshow"));
 
   window.addEventListener("error", (event) => {
     warn("window-error", {
@@ -121,184 +72,116 @@ function bindEvents() {
   });
 
   window.addEventListener("unhandledrejection", (event) => {
-    warn("promise-rejection", {
-      reason: event.reason
-    });
+    warn("unhandled-promise", event.reason);
   });
 }
 
 function prepareVideo() {
   if (!els.video || !els.origin) return;
 
-  els.video.addEventListener("loadeddata", () => {
-    state.videoReady = true;
-    els.origin.classList.add("video-ready");
-    log("video", "loadeddata");
-  });
-
-  els.video.addEventListener("canplay", () => {
-    state.videoReady = true;
-    els.origin.classList.add("video-ready");
-    resumeVideo("canplay");
-  });
+  els.video.addEventListener("loadeddata", markVideoReady);
+  els.video.addEventListener("canplay", markVideoReady);
 
   els.video.addEventListener("error", () => {
-    state.videoFailed = true;
+    runtime.videoFailed = true;
     els.origin.classList.add("video-failed");
-    warn("video-error", getVideoError());
+    warn("video-error", readVideoError());
   });
 
   els.video.addEventListener("stalled", () => {
-    warn("video-stalled", "The video stalled. Attempting recovery.");
+    warn("video-stalled", "Attempting playback recovery.");
     resumeVideo("stalled");
-  });
-
-  els.video.addEventListener("suspend", () => {
-    log("video", "suspend");
   });
 
   resumeVideo("initial");
 
-  setTimeout(() => {
-    if (!state.videoReady && !state.videoFailed) {
-      warn("video-timeout", "Video has not reported ready yet.");
+  window.setTimeout(() => {
+    if (!runtime.videoReady && !runtime.videoFailed) {
+      els.origin.classList.add("video-timeout");
+      warn("video-timeout", "Video has not reported ready. Check assets/eye-loop.mp4 path and filename casing.");
     }
-  }, 2600);
+  }, CONFIG.videoTimeoutMs);
+}
+
+function markVideoReady() {
+  if (!els.origin) return;
+  runtime.videoReady = true;
+  els.origin.classList.add("video-ready");
+  resumeVideo("ready");
 }
 
 function resumeVideo(reason) {
   if (!els.video) return;
+  const attempt = els.video.play();
 
-  const playAttempt = els.video.play();
-
-  if (playAttempt && typeof playAttempt.catch === "function") {
-    playAttempt
-      .then(() => {
-        log("video-play", reason);
-      })
-      .catch((error) => {
-        warn("video-play-blocked", {
-          reason,
-          error: error?.message || error
-        });
-      });
+  if (attempt && typeof attempt.catch === "function") {
+    attempt
+      .then(() => log("video-play", reason))
+      .catch((error) => warn("video-play-blocked", { reason, error: error?.message || error }));
   }
 }
 
-function handleVisibility() {
-  if (!document.hidden) {
-    resumeVideo("visibilitychange");
-  }
-}
-
-function handleFocus() {
+function onFocus() {
   els.origin?.classList.add("searching");
   whisper("");
 }
 
-function handleBlur() {
-  if (!state.searching) {
+function onBlur() {
+  if (!els.input?.value.trim()) {
     els.origin?.classList.remove("searching");
   }
 }
 
-function handleInput(event) {
-  const raw = event.target.value;
-  const normalized = normalizeCode(raw);
-
-  state.lastQuery = normalized;
-
-  if (!raw.trim()) {
+function onInput() {
+  if (els.input?.value.trim()) {
+    els.origin?.classList.add("searching");
+  } else {
     els.origin?.classList.remove("searching");
     whisper("");
-    return;
   }
-
-  els.origin?.classList.add("searching");
 }
 
-function handleSubmit(event) {
+function onSubmit(event) {
   event.preventDefault();
 
-  const raw = els.input?.value || "";
-  const code = normalizeCode(raw);
+  const code = normalizeCode(els.input?.value || "");
 
   if (!code) {
-    softDeny("empty");
+    whisper("");
+    pulseDenied();
     return;
   }
 
-  state.searching = true;
-  els.origin?.classList.add("searching");
+  const entry = CONTENT_REGISTRY[code];
 
-  setTimeout(() => {
-    const entry = CONTENT_REGISTRY[code];
+  if (!entry) {
+    log("query-undocumented", code);
+    whisper("undocumented");
+    pulseDenied();
+    return;
+  }
 
-    if (!entry) {
-      log("query-unmatched", code);
-      softDeny("undocumented");
-      state.searching = false;
-
-      if (!document.activeElement || document.activeElement !== els.input) {
-        els.origin?.classList.remove("searching");
-      }
-
-      return;
-    }
-
-    enterRegisteredState(code, entry);
-  }, CONFIG.timing.searchingMinimum);
-}
-
-function enterRegisteredState(code, entry) {
-  /*
-    Future hook.
-
-    This is where the site will eventually:
-    - transform the eye
-    - alter atmosphere
-    - play warped audio
-    - load a state environment
-    - route to a dedicated page
-    - or open a hidden archive panel
-
-    Not implemented yet by design.
-  */
-
-  log("query-matched", { code, entry });
-
-  whisper(entry.label || "DOCUMENTED");
+  log("query-documented", { code, entry });
+  whisper(entry.label || "documented");
 
   if (entry.route) {
     window.location.href = entry.route;
   }
 }
 
-function softDeny(type) {
+function pulseDenied() {
   if (!els.origin) return;
-
   els.origin.classList.remove("denied");
-  forceReflow(els.origin);
+  void els.origin.offsetWidth;
   els.origin.classList.add("denied");
-
-  const message =
-    type === "empty"
-      ? ""
-      : "undocumented";
-
-  whisper(message);
-
-  window.setTimeout(() => {
-    els.origin?.classList.remove("denied");
-  }, CONFIG.timing.deniedClass);
+  window.setTimeout(() => els.origin?.classList.remove("denied"), CONFIG.deniedMs);
 }
 
 function whisper(message) {
   if (!els.whisper) return;
 
-  window.clearTimeout(state.idleTimer);
-
-  els.whisper.textContent = message || "";
+  window.clearTimeout(runtime.whisperTimer);
+  els.whisper.textContent = message;
 
   if (!message) {
     els.whisper.classList.remove("visible");
@@ -306,27 +189,20 @@ function whisper(message) {
   }
 
   els.whisper.classList.add("visible");
-
-  state.idleTimer = window.setTimeout(() => {
-    els.whisper.classList.remove("visible");
-  }, CONFIG.timing.whisper);
+  runtime.whisperTimer = window.setTimeout(() => {
+    els.whisper?.classList.remove("visible");
+  }, CONFIG.whisperMs);
 }
 
 function normalizeCode(value) {
-  return String(value || "")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toUpperCase();
+  return String(value || "").trim().replace(/\s+/g, " ").toUpperCase();
 }
 
-function getVideoError() {
+function readVideoError() {
   const error = els.video?.error;
+  if (!error) return "Unknown video error.";
 
-  if (!error) {
-    return "Unknown video error.";
-  }
-
-  const map = {
+  const names = {
     1: "MEDIA_ERR_ABORTED",
     2: "MEDIA_ERR_NETWORK",
     3: "MEDIA_ERR_DECODE",
@@ -335,18 +211,13 @@ function getVideoError() {
 
   return {
     code: error.code,
-    name: map[error.code] || "UNKNOWN",
+    name: names[error.code] || "UNKNOWN",
     message: error.message || null
   };
 }
 
-function forceReflow(element) {
-  void element.offsetWidth;
-}
-
 function log(label, payload) {
-  if (!CONFIG.debug) return;
-  console.log(`[IRIS:${label}]`, payload);
+  if (CONFIG.debug) console.log(`[IRIS:${label}]`, payload);
 }
 
 function warn(label, payload) {
