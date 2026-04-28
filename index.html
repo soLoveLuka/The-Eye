@@ -2,28 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="A private archive of altered states." />
+
   <title>Iris Archive</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Syne:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+  <main class="iris-shell" id="irisShell">
 
-  <main class="home">
-    <video class="eye-video" autoplay muted loop playsinline>
-      <source src="assets/eye-loop.mp4" type="video/mp4" />
-    </video>
+    <section class="origin" id="origin" aria-label="Iris Archive origin screen">
 
-    <div class="veil"></div>
+      <div class="video-plane" id="videoPlane">
+        <video
+          class="eye-video"
+          id="eyeVideo"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+          poster="assets/eye-poster.jpg"
+        >
+          <source src="assets/eye-loop.mp4" type="video/mp4" />
+        </video>
+      </div>
 
-    <form class="search-wrap" id="searchForm">
-      <input
-        id="searchInput"
-        type="text"
-        autocomplete="off"
-        spellcheck="false"
-        aria-label="Search psychedelic state"
-      />
-    </form>
+      <div class="fallback-eye" id="fallbackEye" aria-hidden="true"></div>
+
+      <div class="atmosphere atmosphere-vignette"></div>
+      <div class="atmosphere atmosphere-fog"></div>
+      <div class="atmosphere atmosphere-bloom"></div>
+      <div class="atmosphere atmosphere-glass"></div>
+      <div class="atmosphere atmosphere-noise"></div>
+      <div class="atmosphere atmosphere-depth"></div>
+
+      <form class="portal-search" id="portalSearch" autocomplete="off">
+        <div class="search-field-shell" id="searchShell">
+          <input
+            id="portalInput"
+            type="text"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-label="Enter archive code"
+          />
+
+          <div class="search-line top-line"></div>
+          <div class="search-line bottom-line"></div>
+          <div class="search-echo"></div>
+        </div>
+      </form>
+
+      <div class="system-whisper" id="systemWhisper" aria-live="polite"></div>
+
+    </section>
+
   </main>
 
   <script src="app.js"></script>
