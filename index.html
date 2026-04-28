@@ -650,7 +650,7 @@
         transform 1500ms var(--ease),
         filter 1500ms var(--ease);
       filter: blur(0.25px);
-      pointer-events: none;
+      pointer-events: auto;
     }
     
     .state-panel__eyebrow {
@@ -1086,6 +1086,112 @@
       100% {
         filter: blur(0.18px);
       }
+    }
+
+    /* -------------------------------- */
+    /* GAZE SHARPENING                  */
+    /* -------------------------------- */
+    
+    .gaze-batch {
+      display: block;
+      position: relative;
+      width: fit-content;
+      max-width: 100%;
+      transition:
+        opacity 700ms var(--ease),
+        filter 700ms var(--ease),
+        transform 900ms var(--ease),
+        text-shadow 700ms var(--ease);
+    }
+    
+    .state-panel__eyebrow.gaze-batch,
+    .state-panel__title.gaze-batch,
+    .state-panel__body.gaze-batch,
+    .state-card.gaze-batch,
+    .state-panel__hint.gaze-batch {
+      cursor: default;
+    }
+    
+    .gaze-batch::before {
+      content: "";
+      position: absolute;
+      inset: -10px -14px;
+      border-radius: 999px;
+      background:
+        radial-gradient(ellipse at center,
+          rgba(239,235,224,0.07),
+          rgba(125,241,255,0.045) 34%,
+          transparent 72%
+        );
+      filter: blur(16px);
+      opacity: 0;
+      transform: scale(0.92);
+      transition:
+        opacity 800ms var(--ease),
+        transform 900ms var(--ease),
+        filter 900ms var(--ease);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    .gaze-batch:hover,
+    .gaze-batch.is-gazed {
+      opacity: 1 !important;
+      filter:
+        blur(0px)
+        drop-shadow(0 0 12px rgba(239,235,224,0.11))
+        drop-shadow(0 0 34px rgba(125,241,255,0.095)) !important;
+      transform:
+        translate3d(6px, -1px, 24px)
+        rotate(0deg)
+        scale(1.012) !important;
+    }
+    
+    .gaze-batch:hover::before,
+    .gaze-batch.is-gazed::before {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(20px);
+    }
+    
+    .gaze-batch:hover .drift-word,
+    .gaze-batch.is-gazed .drift-word {
+      opacity: 1 !important;
+      filter:
+        blur(0px)
+        drop-shadow(0 0 7px rgba(239,235,224,0.08)) !important;
+      animation-play-state: paused;
+    }
+    
+    .gaze-batch:hover .drift-char,
+    .gaze-batch.is-gazed .drift-char {
+      opacity: 1 !important;
+      color: rgba(239,235,224,0.94);
+      filter: blur(0px) !important;
+      text-shadow:
+        0 0 7px rgba(239,235,224,0.18),
+        0 0 22px rgba(125,241,255,0.16),
+        0 0 52px rgba(255,90,70,0.075);
+      animation-play-state: paused;
+      transform:
+        translate3d(0px, 0px, 0)
+        rotate(0deg)
+        scale(1.01) !important;
+    }
+    
+    .gaze-batch:hover .word-distant,
+    .gaze-batch:hover .word-faint,
+    .gaze-batch.is-gazed .word-distant,
+    .gaze-batch.is-gazed .word-faint {
+      opacity: 1 !important;
+      filter: blur(0px) !important;
+    }
+    
+    .gaze-batch:hover .word-distant .drift-char,
+    .gaze-batch:hover .word-faint .drift-char,
+    .gaze-batch.is-gazed .word-distant .drift-char,
+    .gaze-batch.is-gazed .word-faint .drift-char {
+      opacity: 1 !important;
     }
     
     /* LOOP activation */
@@ -1969,12 +2075,16 @@
       targets.forEach((item, blockIndex) => {
         if (!item.el) return;
     
+        item.el.classList.add("gaze-batch");
+    
         const raw = item.el.textContent || "";
         item.el.innerHTML = "";
     
         const fragment = buildDriftText(raw, `${item.type}-${blockIndex}`, item.type);
         item.el.appendChild(fragment);
       });
+    
+      attachGazeBehavior();
     }
     
     function buildDriftText(text, key, type) {
@@ -2122,6 +2232,32 @@
       };
     }
 
+    function attachGazeBehavior() {
+      const batches = statePanel.querySelectorAll(".gaze-batch");
+    
+      batches.forEach((batch) => {
+        batch.addEventListener("pointerenter", () => {
+          batches.forEach((other) => {
+            if (other !== batch) other.classList.remove("is-gazed");
+          });
+    
+          batch.classList.add("is-gazed");
+        });
+    
+        batch.addEventListener("pointerleave", () => {
+          batch.classList.remove("is-gazed");
+        });
+    
+        batch.addEventListener("focus", () => {
+          batch.classList.add("is-gazed");
+        });
+    
+        batch.addEventListener("blur", () => {
+          batch.classList.remove("is-gazed");
+        });
+      });
+    }
+    
     function getWordDistanceClass(type, index, total, seed) {
       if (type === "title") return "";
     
