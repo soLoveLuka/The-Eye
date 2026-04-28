@@ -388,6 +388,12 @@
       caret-color: transparent;
       pointer-events: auto;
       text-transform: uppercase;
+      transition: opacity 500ms var(--ease);
+    }
+    
+    .iris-home.state-active .invisible-input {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .typed-word {
@@ -572,6 +578,240 @@
         filter 700ms var(--ease);
     }
 
+        /* -------------------------------- */
+    /* DOCUMENTED STATE: THE LOOP       */
+    /* -------------------------------- */
+    
+    .state-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 24;
+      pointer-events: none;
+      opacity: 0;
+      transition:
+        opacity 900ms var(--ease),
+        transform 1200ms var(--ease);
+      transform: translateZ(0);
+    }
+    
+    .state-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      opacity: 0;
+      will-change: opacity, transform, filter;
+      transform: scale(1.035);
+      transition:
+        opacity 1200ms var(--ease),
+        transform 1600ms var(--ease),
+        filter 1600ms var(--ease);
+      filter:
+        brightness(0.86)
+        contrast(1.08)
+        saturate(1.08);
+    }
+    
+    .state-video--transition {
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+    
+    .state-video--loop {
+      z-index: 2;
+      mix-blend-mode: screen;
+      transform: scale(1.05);
+      filter:
+        brightness(0.84)
+        contrast(1.12)
+        saturate(1.14);
+    }
+    
+    .state-panel {
+      position: absolute;
+      left: clamp(22px, 4vw, 54px);
+      bottom: clamp(22px, 4vw, 44px);
+      width: min(560px, calc(100vw - 42px));
+      padding: 22px 22px 18px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.08) 0%,
+          rgba(255,255,255,0.03) 42%,
+          rgba(0,0,0,0.24) 100%
+        );
+      border: 1px solid rgba(239, 235, 224, 0.08);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        inset 0 -1px 0 rgba(0,0,0,0.34),
+        0 24px 90px rgba(0,0,0,0.42),
+        0 0 42px rgba(125,241,255,0.06);
+      backdrop-filter: blur(28px) saturate(1.18);
+      -webkit-backdrop-filter: blur(28px) saturate(1.18);
+      opacity: 0;
+      transform: translate3d(0, 28px, 0) scale(0.985);
+      transition:
+        opacity 900ms var(--ease),
+        transform 1100ms var(--ease),
+        box-shadow 1100ms var(--ease);
+    }
+    
+    .state-panel__eyebrow {
+      margin-bottom: 10px;
+      color: rgba(239, 235, 224, 0.42);
+      font-size: 0.66rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+    }
+    
+    .state-panel__title {
+      margin: 0 0 10px;
+      color: rgba(239, 235, 224, 0.94);
+      font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+    
+    .state-panel__body {
+      margin: 0 0 18px;
+      color: rgba(239, 235, 224, 0.74);
+      font-size: 0.92rem;
+      line-height: 1.62;
+      max-width: 60ch;
+    }
+    
+    .state-panel__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    
+    .state-card {
+      min-height: 110px;
+      padding: 14px 14px 13px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.045) 0%,
+          rgba(255,255,255,0.014) 100%
+        );
+      border: 1px solid rgba(239, 235, 224, 0.07);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 10px 34px rgba(0,0,0,0.18);
+    }
+    
+    .state-card__label {
+      margin-bottom: 8px;
+      color: rgba(239, 235, 224, 0.42);
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    
+    .state-card__value {
+      margin: 0;
+      color: rgba(239, 235, 224, 0.68);
+      font-size: 0.83rem;
+      line-height: 1.5;
+    }
+    
+    .state-panel__hint {
+      margin-top: 14px;
+      color: rgba(239, 235, 224, 0.32);
+      font-size: 0.58rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    
+    /* LOOP activation */
+    
+    .iris-home.state-active .portal,
+    .iris-home.state-active .whisper {
+      opacity: 0;
+      transform: translate3d(-50%, -50%, 0) scale(0.96);
+      pointer-events: none;
+      transition:
+        opacity 500ms var(--ease),
+        transform 800ms var(--ease);
+    }
+    
+    .iris-home.state-active .invisible-input {
+      pointer-events: none;
+    }
+    
+    .iris-home.loop-active .state-layer {
+      opacity: 1;
+    }
+    
+    .iris-home.loop-active .state-video--transition {
+      opacity: 0.92;
+      transform: scale(1.02);
+    }
+    
+    .iris-home.loop-phase-loop .state-video--transition {
+      opacity: 0;
+      transform: scale(1.065);
+      filter:
+        brightness(0.78)
+        contrast(1.12)
+        saturate(1.18);
+    }
+    
+    .iris-home.loop-phase-loop .state-video--loop {
+      opacity: 0.94;
+      transform: scale(1.035);
+    }
+    
+    .iris-home.loop-phase-panel .state-panel {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    
+    .iris-home.loop-active .edge-dimension {
+      opacity: 1;
+      filter: blur(34px) saturate(1.8);
+    }
+    
+    .iris-home.loop-active .fog-vessel {
+      opacity: 0.88;
+      filter: blur(38px);
+    }
+    
+    .iris-home.loop-active .eye-video {
+      filter:
+        brightness(0.58)
+        contrast(1.28)
+        saturate(1.26)
+        hue-rotate(2deg);
+      transform:
+        translate3d(-50%, -50%, 0)
+        scale(calc(1.15 + var(--scroll-depth) * 0.045));
+    }
+    
+    /* smooth mobile tuning */
+    
+    @media (max-width: 900px) {
+      .state-panel {
+        width: min(620px, calc(100vw - 26px));
+        left: 13px;
+        right: 13px;
+        bottom: 13px;
+        padding: 18px 16px 16px;
+      }
+    
+      .state-panel__grid {
+        grid-template-columns: 1fr;
+      }
+    
+      .state-card {
+        min-height: auto;
+      }
+    }
+
     .whisper.visible {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
@@ -743,7 +983,78 @@
     <section class="portal" id="portal" aria-hidden="true">
       <div class="typed-word empty" id="typedWord"></div>
     </section>
-
+    
+    <section class="state-layer" id="stateLayer" aria-hidden="true">
+      <video
+        class="state-video state-video--transition"
+        id="loopTransitionVideo"
+        muted
+        playsinline
+        preload="metadata"
+      >
+        <source src="assets/loop-transition.mp4" type="video/mp4" />
+      </video>
+    
+      <video
+        class="state-video state-video--loop"
+        id="loopLoopVideo"
+        muted
+        playsinline
+        preload="metadata"
+        loop
+      >
+        <source src="assets/loop-loop.mp4" type="video/mp4" />
+      </video>
+    
+      <aside class="state-panel" id="statePanel">
+        <div class="state-panel__eyebrow" id="stateEyebrow">Documented State</div>
+        <h2 class="state-panel__title" id="stateTitle">The Loop</h2>
+        <p class="state-panel__body" id="stateBody">
+          A recursive psychedelic state in which thought, speech, intention, or action
+          begin to repeat in a self-reinforcing circle. Time feels folded. Meaning
+          feels sticky. The mind becomes trapped in a pattern it can see, but cannot
+          easily exit.
+        </p>
+    
+        <div class="state-panel__grid">
+          <div class="state-card">
+            <div class="state-card__label">Common Triggers</div>
+            <p class="state-card__value" id="stateTriggers">
+              High-dose psychedelics, cannabis amplification, anxiety spikes,
+              confusion in social settings, sleep loss, overstimulation, dissociation.
+            </p>
+          </div>
+    
+          <div class="state-card">
+            <div class="state-card__label">Substances Reported</div>
+            <p class="state-card__value" id="stateSubstances">
+              LSD, psilocybin, cannabis, DMT, ketamine, and mixed states involving
+              fatigue, panic, or overstimulation.
+            </p>
+          </div>
+    
+          <div class="state-card">
+            <div class="state-card__label">Typical Markers</div>
+            <p class="state-card__value" id="stateMarkers">
+              Repeated phrases, repeated actions, returning thoughts, déjà vu,
+              narrative collapse, “stuck” feeling, confusion about what comes next.
+            </p>
+          </div>
+    
+          <div class="state-card">
+            <div class="state-card__label">Grounding Notes</div>
+            <p class="state-card__value" id="stateGrounding">
+              Reduce stimulation. Change rooms if safe. Hydrate. Slow the breath.
+              Let another grounded person redirect attention outward and anchor the
+              sequence gently.
+            </p>
+          </div>
+        </div>
+    
+        <div class="state-panel__hint">Press ESC to return</div>
+      </aside>
+    </section>
+    
     <div class="whisper" id="whisper" aria-live="polite"></div>
   </main>
 
@@ -756,10 +1067,36 @@
     const input = document.getElementById("portalInput");
     const typedWord = document.getElementById("typedWord");
     const whisper = document.getElementById("whisper");
+    
+    const stateLayer = document.getElementById("stateLayer");
+    const statePanel = document.getElementById("statePanel");
+    const stateEyebrow = document.getElementById("stateEyebrow");
+    const stateTitle = document.getElementById("stateTitle");
+    const stateBody = document.getElementById("stateBody");
+    const stateTriggers = document.getElementById("stateTriggers");
+    const stateSubstances = document.getElementById("stateSubstances");
+    const stateMarkers = document.getElementById("stateMarkers");
+    const stateGrounding = document.getElementById("stateGrounding");
+    
+    const loopTransitionVideo = document.getElementById("loopTransitionVideo");
+    const loopLoopVideo = document.getElementById("loopLoopVideo");
 
     const CONTENT_REGISTRY = Object.freeze({
-      // Future documented codes go here.
-      // LOOP: { label: "LOOPING THOUGHT" }
+      LOOP: {
+        id: "LOOP",
+        eyebrow: "Documented State",
+        title: "The Loop",
+        body:
+          "A recursive psychedelic state in which thought, speech, intention, or action begin to repeat in a self-reinforcing circle. Time feels folded. Meaning feels sticky. The mind becomes trapped in a pattern it can see, but cannot easily exit.",
+        triggers:
+          "High-dose psychedelics, cannabis amplification, anxiety spikes, confusion in social settings, sleep loss, overstimulation, dissociation.",
+        substances:
+          "LSD, psilocybin, cannabis, DMT, ketamine, and mixed states involving fatigue, panic, or overstimulation.",
+        markers:
+          "Repeated phrases, repeated actions, returning thoughts, déjà vu, narrative collapse, a 'stuck' sensation, and confusion about what comes next.",
+        grounding:
+          "Reduce stimulation. Change rooms if safe. Hydrate. Slow the breath. Let a grounded person redirect attention outward and anchor the sequence gently."
+      }
     });
 
     const debug = true;
@@ -774,7 +1111,10 @@
       lastValue: "",
       whisperTimer: null,
       fallTimer: null,
-      focusTimer: null
+      focusTimer: null,
+      activeState: null,
+      stateTransitionTimer: null,
+      statePanelTimer: null
     };
 
     init();
@@ -792,14 +1132,26 @@
 
     function auditElements() {
       const missing = [];
-
+    
       if (!irisHome) missing.push("irisHome");
       if (!video) missing.push("eyeVideo");
       if (!form) missing.push("portalForm");
       if (!input) missing.push("portalInput");
       if (!typedWord) missing.push("typedWord");
       if (!whisper) missing.push("whisper");
-
+    
+      if (!stateLayer) missing.push("stateLayer");
+      if (!statePanel) missing.push("statePanel");
+      if (!stateEyebrow) missing.push("stateEyebrow");
+      if (!stateTitle) missing.push("stateTitle");
+      if (!stateBody) missing.push("stateBody");
+      if (!stateTriggers) missing.push("stateTriggers");
+      if (!stateSubstances) missing.push("stateSubstances");
+      if (!stateMarkers) missing.push("stateMarkers");
+      if (!stateGrounding) missing.push("stateGrounding");
+      if (!loopTransitionVideo) missing.push("loopTransitionVideo");
+      if (!loopLoopVideo) missing.push("loopLoopVideo");
+    
       if (missing.length) {
         warn("audit-missing-elements", missing);
       } else {
@@ -852,14 +1204,16 @@
 
     function bindEvents() {
       form.addEventListener("submit", handleSubmit);
-
+    
       input.addEventListener("input", () => {
+        if (state.activeState) return;
+    
         const value = input.value.toUpperCase();
         input.value = value;
         state.lastValue = value;
-
+    
         renderLetters(value);
-
+    
         if (value.trim()) {
           irisHome.classList.add("typing");
         } else {
@@ -867,48 +1221,76 @@
           setWhisper("");
         }
       });
-
+    
       input.addEventListener("focus", () => {
-        irisHome.classList.add("typing");
+        if (!state.activeState) {
+          irisHome.classList.add("typing");
+        }
       });
-
+    
       input.addEventListener("blur", () => {
-        if (!input.value.trim()) {
+        if (!input.value.trim() && !state.activeState) {
           irisHome.classList.remove("typing");
         }
       });
-
+    
+      if (loopTransitionVideo) {
+        loopTransitionVideo.addEventListener("ended", () => {
+          if (state.activeState === "LOOP") {
+            enterLoopPhaseLoop();
+          }
+        });
+      }
+    
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && state.activeState) {
+          exitState();
+          return;
+        }
+    
+        if (!state.activeState && event.key.length === 1 && document.activeElement !== input) {
+          focusPortalSoon();
+        }
+      });
+    
       window.addEventListener("pointermove", handlePointerMove, { passive: true });
       window.addEventListener("wheel", handleWheel, { passive: false });
-
+    
       window.addEventListener("touchmove", (event) => {
         if (event.touches && event.touches[0]) {
           const touch = event.touches[0];
           handlePointerPosition(touch.clientX, touch.clientY);
         }
       }, { passive: true });
-
+    
       window.addEventListener("click", () => {
-        focusPortalSoon();
-      });
-
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          playVideo("visibilitychange");
+        if (!state.activeState) {
           focusPortalSoon();
         }
       });
-
+    
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          playVideo("visibilitychange");
+    
+          if (state.activeState === "LOOP") {
+            safePlay(loopLoopVideo, "loop-resume");
+          } else {
+            focusPortalSoon();
+          }
+        }
+      });
+    
       window.addEventListener("pageshow", () => {
         lockScroll();
         playVideo("pageshow");
       });
-
+    
       window.addEventListener("resize", () => {
         lockScroll();
         renderLetters(input.value);
       });
-
+    
       window.addEventListener("error", (event) => {
         warn("window-error", {
           message: event.message,
@@ -917,7 +1299,7 @@
           column: event.colno
         });
       });
-
+    
       window.addEventListener("unhandledrejection", (event) => {
         warn("promise-rejection", event.reason);
       });
@@ -1041,27 +1423,29 @@
 
     function handleSubmit(event) {
       event.preventDefault();
-
+    
+      if (state.activeState) return;
+    
       const code = normalize(input.value);
-
+    
       if (!code) {
         deny("");
         return;
       }
-
+    
       triggerFall();
-
+    
       const entry = CONTENT_REGISTRY[code];
-
+    
       setTimeout(() => {
         if (!entry) {
           deny("undocumented");
           log("query-unmatched", code);
           return;
         }
-
-        setWhisper(entry.label || "documented");
+    
         log("query-matched", { code, entry });
+        enterDocumentedState(entry);
       }, 920);
     }
 
@@ -1088,6 +1472,133 @@
       setTimeout(() => {
         irisHome.classList.remove("denied");
       }, 850);
+    }
+
+     function enterDocumentedState(entry) {
+      if (!entry || !entry.id) return;
+    
+      if (entry.id === "LOOP") {
+        enterLoopState(entry);
+        return;
+      }
+    
+      warn("state", `No handler exists for state: ${entry.id}`);
+    }
+    
+    function enterLoopState(entry) {
+      clearTimeout(state.stateTransitionTimer);
+      clearTimeout(state.statePanelTimer);
+    
+      state.activeState = "LOOP";
+    
+      populateStatePanel(entry);
+    
+      irisHome.classList.remove("typing");
+      irisHome.classList.remove("loop-phase-loop", "loop-phase-panel");
+      irisHome.classList.add("state-active", "loop-active");
+    
+      stateLayer.setAttribute("aria-hidden", "false");
+    
+      input.blur();
+    
+      safeResetVideo(loopTransitionVideo);
+      safeResetVideo(loopLoopVideo);
+    
+      safePlay(loopTransitionVideo, "loop-transition-start");
+    
+      // fallback in case the transition video doesn't dispatch `ended`
+      state.stateTransitionTimer = setTimeout(() => {
+        if (state.activeState === "LOOP" && !irisHome.classList.contains("loop-phase-loop")) {
+          enterLoopPhaseLoop();
+        }
+      }, 2400);
+    }
+    
+    function enterLoopPhaseLoop() {
+      if (state.activeState !== "LOOP") return;
+    
+      clearTimeout(state.stateTransitionTimer);
+    
+      irisHome.classList.add("loop-phase-loop");
+    
+      safePlay(loopLoopVideo, "loop-loop-start");
+    
+      state.statePanelTimer = setTimeout(() => {
+        if (state.activeState === "LOOP") {
+          irisHome.classList.add("loop-phase-panel");
+        }
+      }, 340);
+    }
+    
+    function exitState() {
+      clearTimeout(state.stateTransitionTimer);
+      clearTimeout(state.statePanelTimer);
+    
+      state.activeState = null;
+    
+      irisHome.classList.remove("state-active", "loop-active", "loop-phase-loop", "loop-phase-panel");
+    
+      stateLayer.setAttribute("aria-hidden", "true");
+    
+      pauseAndResetVideo(loopTransitionVideo);
+      pauseAndResetVideo(loopLoopVideo);
+    
+      input.value = "";
+      renderLetters("");
+      setWhisper("");
+    
+      focusPortalSoon();
+    }
+    
+    function populateStatePanel(entry) {
+      stateEyebrow.textContent = entry.eyebrow || "Documented State";
+      stateTitle.textContent = entry.title || "Untitled State";
+      stateBody.textContent = entry.body || "";
+      stateTriggers.textContent = entry.triggers || "";
+      stateSubstances.textContent = entry.substances || "";
+      stateMarkers.textContent = entry.markers || "";
+      stateGrounding.textContent = entry.grounding || "";
+    }
+    
+    function safePlay(videoElement, label) {
+      if (!videoElement) return;
+    
+      const attempt = videoElement.play();
+    
+      if (attempt && typeof attempt.then === "function") {
+        attempt
+          .then(() => {
+            log("state-video-play", label);
+          })
+          .catch((error) => {
+            warn("state-video-play-failed", {
+              label,
+              error: error?.message || error
+            });
+          });
+      }
+    }
+    
+    function safeResetVideo(videoElement) {
+      if (!videoElement) return;
+    
+      try {
+        videoElement.pause();
+        videoElement.currentTime = 0;
+      } catch (error) {
+        warn("state-video-reset-failed", error);
+      }
+    }
+    
+    function pauseAndResetVideo(videoElement) {
+      if (!videoElement) return;
+    
+      try {
+        videoElement.pause();
+        videoElement.currentTime = 0;
+      } catch (error) {
+        warn("state-video-pause-reset-failed", error);
+      }
     }
 
     function setWhisper(message) {
