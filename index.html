@@ -366,39 +366,6 @@
       }
     }
 
-    .chromatic-ghost {
-      z-index: 7;
-      opacity: 0.28;
-      mix-blend-mode: screen;
-      background:
-        radial-gradient(circle at calc(50% + 0.7%) calc(50% - 0.4%),
-          transparent 0%,
-          transparent 31%,
-          rgba(255, 0, 64, 0.075) 39%,
-          transparent 52%
-        ),
-        radial-gradient(circle at calc(50% - 0.8%) calc(50% + 0.3%),
-          transparent 0%,
-          transparent 31%,
-          rgba(0, 180, 255, 0.09) 39%,
-          transparent 52%
-        );
-      filter: blur(1.2px);
-      animation: chromaBreathe 8s ease-in-out infinite alternate;
-    }
-
-    @keyframes chromaBreathe {
-      from {
-        opacity: 0.15;
-        transform: scale(1);
-      }
-
-      to {
-        opacity: 0.42;
-        transform: scale(1.025);
-      }
-    }
-
     .grain {
       z-index: 8;
       opacity: 0.105;
@@ -773,7 +740,6 @@
       .fog-vessel,
       .anamorphic-aura,
       .glass-strike,
-      .chromatic-ghost,
       .grain,
       .search-shell,
       .portal,
@@ -817,7 +783,6 @@
     <div class="fx fog-vessel"></div>
     <div class="fx lens-curve"></div>
     <div class="fx glass-strike"></div>
-    <div class="fx chromatic-ghost"></div>
     <div class="fx grain"></div>
 
     <form id="portalForm" autocomplete="off">
