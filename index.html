@@ -3,75 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Iris Archive</title>
-
-  <!-- PLACEHOLDER: Replace these fonts if you want. Syne gives the sharp luxury title feel. -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <main id="app">
+  <main class="home">
+    <video class="eye-video" autoplay muted loop playsinline>
+      <source src="assets/eye-loop.mp4" type="video/mp4" />
+    </video>
 
-    <section class="origin" id="origin">
-      <canvas id="eyeCanvas"></canvas>
+    <div class="veil"></div>
 
-      <div class="origin-copy">
-        <div class="mark">IRIS ARCHIVE</div>
-        <h1>Look closer.</h1>
-        <p>
-          A psychedelic field guide to altered perception, entered through the eye.
-        </p>
-      </div>
-
-      <div class="search" id="searchBox">
-        <input id="searchInput" type="text" placeholder="Search: ego dissolution, entity encounter, time distortion..." />
-        <button id="enterButton">Enter</button>
-      </div>
-
-      <div class="hint">
-        click the pupil
-      </div>
-    </section>
-
-    <section class="archive" id="archive">
-      <canvas id="archiveCanvas"></canvas>
-
-      <button class="return" id="returnButton">Origin</button>
-
-      <div class="archive-title">
-        <span id="stateIndex">01</span>
-        <h2 id="stateName">Sensory Amplification</h2>
-      </div>
-
-      <div class="state-language">
-        <p id="stateEssence">
-          Ordinary sensation becomes vivid, dimensional, and strangely intimate.
-        </p>
-
-        <div class="language-columns">
-          <div>
-            <small>perception</small>
-            <p id="statePerception">Color, texture, sound, and space feel intensified.</p>
-          </div>
-          <div>
-            <small>mind</small>
-            <p id="stateMind">Attention begins attaching to fine detail and pattern.</p>
-          </div>
-          <div>
-            <small>tone</small>
-            <p id="stateTone">Awe, curiosity, fascination, and sometimes overwhelm.</p>
-          </div>
-        </div>
-      </div>
-
-      <nav class="state-orbit" id="stateOrbit"></nav>
-    </section>
-
+    <form class="search-wrap" id="searchForm">
+      <input
+        id="searchInput"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Search psychedelic state"
+      />
+    </form>
   </main>
 
   <script src="app.js"></script>
