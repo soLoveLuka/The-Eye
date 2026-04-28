@@ -3,50 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Iris Archive — a private cinematic gateway for altered-state exploration." />
   <title>Iris Archive</title>
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="iris-home" id="irisHome">
-    <video
-      id="eyeVideo"
-      class="eye-video"
-      autoplay
-      muted
-      loop
-      playsinline
-      preload="auto"
-      poster="./assets/eye-poster.jpg"
-      aria-hidden="true"
-    >
-      <source src="./assets/eye-loop.mp4" type="video/mp4" />
-    </video>
+  <main class="iris-origin" id="irisOrigin" aria-label="Iris Archive origin screen">
+    <section class="video-stage" aria-hidden="true">
+      <video
+        class="eye-video"
+        id="eyeVideo"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        poster="assets/eye-poster.jpg"
+      >
+        <source src="assets/eye-loop.mp4" type="video/mp4" />
+      </video>
+      <div class="video-fallback" id="videoFallback"></div>
+    </section>
 
-    <div class="screen-shadow" aria-hidden="true"></div>
-    <div class="edge-fog fog-a" aria-hidden="true"></div>
-    <div class="edge-fog fog-b" aria-hidden="true"></div>
-    <div class="glass-sheen" aria-hidden="true"></div>
-    <div class="film-grain" aria-hidden="true"></div>
+    <div class="layer color-grade" aria-hidden="true"></div>
+    <div class="layer iris-breath" aria-hidden="true"></div>
+    <div class="layer edge-fog" aria-hidden="true"></div>
+    <div class="layer glass-sheen" aria-hidden="true"></div>
+    <div class="layer film-grain" aria-hidden="true"></div>
+    <div class="layer final-vignette" aria-hidden="true"></div>
 
-    <form class="iris-search" id="irisSearch" autocomplete="off">
-      <div class="search-dimensional-wrap">
+    <form class="search-portal" id="searchPortal" autocomplete="off">
+      <div class="dimensional-field" id="dimensionalField">
         <input
-          id="irisInput"
-          class="iris-input"
+          id="portalInput"
           type="text"
           aria-label="Enter archive code"
           autocomplete="off"
-          autocapitalize="off"
+          autocorrect="off"
+          autocapitalize="characters"
           spellcheck="false"
         />
-        <span class="search-glow" aria-hidden="true"></span>
-        <span class="search-depth" aria-hidden="true"></span>
+        <span class="field-rail rail-top" aria-hidden="true"></span>
+        <span class="field-rail rail-bottom" aria-hidden="true"></span>
+        <span class="field-halo" aria-hidden="true"></span>
       </div>
     </form>
 
-    <p class="iris-status" id="irisStatus" aria-live="polite"></p>
+    <p class="whisper" id="whisper" aria-live="polite"></p>
   </main>
 
-  <script src="./app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
