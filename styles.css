@@ -1,90 +1,725 @@
 :root {
-  --bone: rgba(238, 231, 216, 0.82);
-  --faint: rgba(238, 231, 216, 0.16);
+  --black: #000000;
+  --near-black: #020203;
+
+  --bone: rgba(239, 235, 224, 0.86);
+  --bone-soft: rgba(239, 235, 224, 0.48);
+  --bone-faint: rgba(239, 235, 224, 0.14);
+
+  --cyan: rgba(130, 241, 255, 0.32);
+  --cyan-soft: rgba(130, 241, 255, 0.13);
+  --blue: rgba(64, 164, 255, 0.16);
+  --violet: rgba(151, 117, 255, 0.16);
+  --gold: rgba(255, 215, 142, 0.14);
+
+  --search-width: min(570px, 72vw);
+  --search-height: 42px;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-silk: cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html,
+html {
+  background: #000;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   width: 100%;
   height: 100%;
   background: #000;
+  color: var(--bone);
   overflow: hidden;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
 }
 
-.home {
+button,
+input {
+  font: inherit;
+}
+
+.iris-shell,
+.origin {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
   background: #000;
+}
+
+.origin {
+  isolation: isolate;
+  cursor: default;
+}
+
+/* ----------------------------- */
+/* VIDEO FOUNDATION              */
+/* ----------------------------- */
+
+.video-plane {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #000;
+  transform: translateZ(0);
 }
 
 .eye-video {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: 50% auto auto 50%;
+  width: 100vw;
+  height: 100vh;
+  min-width: 100%;
+  min-height: 100%;
   object-fit: cover;
+  object-position: center center;
+  transform:
+    translate3d(-50%, -50%, 0)
+    scale(1.055);
+
   filter:
-    contrast(1.08)
-    saturate(1.08)
-    brightness(0.86);
-  transform: scale(1.015);
+    brightness(0.76)
+    contrast(1.16)
+    saturate(1.12)
+    hue-rotate(-2deg);
+
+  will-change: transform, filter;
+  opacity: 0;
+  transition:
+    opacity 2200ms var(--ease-out-expo),
+    filter 1800ms var(--ease-out-expo),
+    transform 2200ms var(--ease-out-expo);
+
+  animation: irisBreath 18s var(--ease-silk) infinite alternate;
 }
 
-.veil {
+.origin.video-ready .eye-video {
+  opacity: 1;
+}
+
+@keyframes irisBreath {
+  0% {
+    transform:
+      translate3d(-50.15%, -50.05%, 0)
+      scale(1.048);
+    filter:
+      brightness(0.72)
+      contrast(1.14)
+      saturate(1.08)
+      hue-rotate(-3deg);
+  }
+
+  46% {
+    transform:
+      translate3d(-49.9%, -50.2%, 0)
+      scale(1.07);
+    filter:
+      brightness(0.78)
+      contrast(1.18)
+      saturate(1.16)
+      hue-rotate(0deg);
+  }
+
+  100% {
+    transform:
+      translate3d(-50.35%, -49.85%, 0)
+      scale(1.088);
+    filter:
+      brightness(0.8)
+      contrast(1.2)
+      saturate(1.2)
+      hue-rotate(2deg);
+  }
+}
+
+/* Fallback only appears if video fails */
+.fallback-eye {
   position: absolute;
   inset: 0;
+  z-index: -1;
+  opacity: 0;
   background:
-    radial-gradient(circle at center, transparent 0%, transparent 42%, rgba(0,0,0,0.42) 78%, rgba(0,0,0,0.82) 100%),
-    linear-gradient(to bottom, rgba(0,0,0,0.22), transparent 35%, rgba(0,0,0,0.3));
+    radial-gradient(circle at 50% 50%,
+      #020202 0%,
+      #020202 12%,
+      rgba(20, 42, 48, 0.95) 19%,
+      rgba(110, 210, 225, 0.3) 29%,
+      rgba(8, 22, 26, 0.9) 48%,
+      rgba(0, 0, 0, 1) 74%
+    );
+  transition: opacity 1200ms ease;
+}
+
+.origin.video-failed .fallback-eye {
+  z-index: 0;
+  opacity: 1;
+}
+
+/* ----------------------------- */
+/* ATMOSPHERE                    */
+/* ----------------------------- */
+
+.atmosphere {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
 }
 
-.search-wrap {
-  position: relative;
-  z-index: 5;
-  width: min(520px, 82vw);
-  transform: translateY(18vh);
+.atmosphere-vignette {
+  z-index: 1;
+  background:
+    radial-gradient(circle at 50% 50%,
+      transparent 0%,
+      transparent 33%,
+      rgba(0, 0, 0, 0.18) 51%,
+      rgba(0, 0, 0, 0.68) 78%,
+      rgba(0, 0, 0, 0.96) 100%
+    ),
+    linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.42) 0%,
+      transparent 27%,
+      transparent 61%,
+      rgba(0, 0, 0, 0.54) 100%
+    );
 }
 
-.search-wrap input {
-  width: 100%;
-  height: 54px;
-  border: 0;
-  outline: 0;
-  color: var(--bone);
-  text-align: center;
-  letter-spacing: 0.12em;
-  font-size: 0.9rem;
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 999px;
-  backdrop-filter: blur(18px);
-  box-shadow:
-    inset 0 0 0 1px var(--faint),
-    0 24px 80px rgba(0,0,0,0.45);
+.atmosphere-fog {
+  z-index: 2;
+  inset: -12%;
+  opacity: 0.88;
+  filter: blur(24px);
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      transparent 0%,
+      transparent 38%,
+      rgba(170, 225, 235, 0.035) 56%,
+      rgba(198, 232, 236, 0.11) 75%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    radial-gradient(circle at 4% 92%,
+      rgba(160, 220, 230, 0.17),
+      transparent 26%
+    ),
+    radial-gradient(circle at 96% 9%,
+      rgba(160, 220, 230, 0.13),
+      transparent 24%
+    ),
+    radial-gradient(circle at 50% 105%,
+      rgba(255, 255, 255, 0.08),
+      transparent 38%
+    );
+
+  animation: edgeMist 20s var(--ease-silk) infinite alternate;
 }
 
-.search-wrap input:focus {
-  box-shadow:
-    inset 0 0 0 1px rgba(238,231,216,0.34),
-    0 0 34px rgba(128,220,255,0.13),
-    0 24px 80px rgba(0,0,0,0.45);
-}
-
-@media (max-width: 700px) {
-  .search-wrap {
-    transform: translateY(24vh);
-    width: min(440px, 84vw);
+@keyframes edgeMist {
+  0% {
+    opacity: 0.62;
+    transform: translate3d(-0.8%, 0.5%, 0) scale(1.02);
   }
 
-  .search-wrap input {
-    height: 50px;
+  100% {
+    opacity: 0.96;
+    transform: translate3d(0.8%, -0.7%, 0) scale(1.065);
+  }
+}
+
+.atmosphere-bloom {
+  z-index: 3;
+  opacity: 0.84;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(circle at 50% 48%,
+      transparent 0%,
+      transparent 24%,
+      var(--cyan-soft) 37%,
+      transparent 48%
+    ),
+    radial-gradient(circle at 68% 38%,
+      rgba(255, 255, 255, 0.08),
+      transparent 10%
+    ),
+    radial-gradient(circle at 40% 55%,
+      rgba(120, 235, 255, 0.055),
+      transparent 23%
+    );
+  animation: bloomPulse 11s ease-in-out infinite alternate;
+}
+
+@keyframes bloomPulse {
+  from {
+    opacity: 0.58;
+    filter: blur(0px);
+  }
+
+  to {
+    opacity: 0.92;
+    filter: blur(1.2px);
+  }
+}
+
+.atmosphere-glass {
+  z-index: 4;
+  background:
+    linear-gradient(105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.018) 42%,
+      rgba(255, 255, 255, 0.065) 48%,
+      rgba(255, 255, 255, 0.018) 54%,
+      transparent 100%
+    );
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  transform: translateX(-10%);
+  animation: glassShift 28s ease-in-out infinite alternate;
+}
+
+@keyframes glassShift {
+  to {
+    transform: translateX(8%);
+    opacity: 0.72;
+  }
+}
+
+.atmosphere-noise {
+  z-index: 5;
+  opacity: 0.13;
+  mix-blend-mode: overlay;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 260 260' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.65'/%3E%3C/svg%3E");
+  animation: grainMove 5s steps(7) infinite;
+}
+
+@keyframes grainMove {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(-4%, 3%, 0);
+  }
+}
+
+.atmosphere-depth {
+  z-index: 6;
+  box-shadow:
+    inset 0 0 90px rgba(0, 0, 0, 0.88),
+    inset 0 0 220px rgba(0, 0, 0, 0.66);
+}
+
+/* ----------------------------- */
+/* SEARCH PORTAL                 */
+/* ----------------------------- */
+
+.portal-search {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 12;
+  width: var(--search-width);
+  height: var(--search-height);
+  transform:
+    translate3d(-50%, -50%, 0)
+    perspective(900px);
+  display: grid;
+  place-items: center;
+}
+
+.search-field-shell {
+  position: relative;
+  width: 100%;
+  height: var(--search-height);
+  perspective: 1100px;
+  transform-style: preserve-3d;
+  animation: searchHover 9s var(--ease-silk) infinite alternate;
+}
+
+@keyframes searchHover {
+  0% {
+    transform: translate3d(0, 1px, 0) rotateX(4deg);
+  }
+
+  100% {
+    transform: translate3d(0, -3px, 0) rotateX(0.5deg);
+  }
+}
+
+.search-field-shell::before {
+  content: "";
+  position: absolute;
+  inset: -36px -54px;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 50%,
+      rgba(130, 241, 255, 0.18),
+      rgba(130, 241, 255, 0.07) 31%,
+      rgba(255, 255, 255, 0.025) 46%,
+      transparent 72%
+    );
+  filter: blur(24px);
+  opacity: 0.8;
+  transform: translateZ(-60px);
+  transition:
+    opacity 900ms var(--ease-out-expo),
+    filter 900ms var(--ease-out-expo),
+    transform 900ms var(--ease-out-expo);
+}
+
+.search-field-shell::after {
+  content: "";
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: -25px;
+  height: 26px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at center,
+      rgba(0, 0, 0, 0.74),
+      rgba(0, 0, 0, 0.28) 42%,
+      transparent 75%
+    );
+  filter: blur(16px);
+  transform: translateZ(-80px);
+  opacity: 0.82;
+}
+
+#portalInput {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  height: var(--search-height);
+  border: 0;
+  outline: none;
+  appearance: none;
+
+  color: rgba(239, 235, 224, 0.9);
+  caret-color: rgba(220, 250, 255, 0.95);
+
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.105) 0%,
+      rgba(255, 255, 255, 0.045) 45%,
+      rgba(0, 0, 0, 0.21) 100%
+    );
+
+  border-radius: 999px;
+  text-align: center;
+
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+
+  backdrop-filter: blur(26px) saturate(1.28);
+  -webkit-backdrop-filter: blur(26px) saturate(1.28);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(239, 235, 224, 0.13),
+    0 0 28px rgba(130, 241, 255, 0.11),
+    0 24px 78px rgba(0, 0, 0, 0.78);
+
+  transform:
+    translateZ(32px)
+    rotateX(2deg);
+
+  transition:
+    width 1100ms var(--ease-out-expo),
+    height 1100ms var(--ease-out-expo),
+    background 1100ms var(--ease-out-expo),
+    box-shadow 1100ms var(--ease-out-expo),
+    transform 1200ms var(--ease-out-expo),
+    letter-spacing 900ms var(--ease-out-expo),
+    color 900ms var(--ease-out-expo);
+}
+
+#portalInput:focus {
+  width: 104%;
+  height: calc(var(--search-height) + 2px);
+  letter-spacing: 0.27em;
+
+  background:
+    linear-gradient(180deg,
+      rgba(255, 255, 255, 0.145) 0%,
+      rgba(255, 255, 255, 0.062) 48%,
+      rgba(0, 0, 0, 0.26) 100%
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(239, 235, 224, 0.24),
+    0 0 42px rgba(130, 241, 255, 0.2),
+    0 0 100px rgba(130, 241, 255, 0.08),
+    0 30px 110px rgba(0, 0, 0, 0.86);
+
+  transform:
+    translateZ(52px)
+    rotateX(0deg)
+    scale(1.012);
+}
+
+#portalInput::selection {
+  background: rgba(130, 241, 255, 0.25);
+}
+
+.search-line {
+  position: absolute;
+  z-index: 5;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      transparent,
+      rgba(239, 235, 224, 0.32),
+      rgba(130, 241, 255, 0.42),
+      rgba(239, 235, 224, 0.28),
+      transparent
+    );
+  opacity: 0.32;
+  filter: blur(0.2px);
+  transition:
+    opacity 900ms var(--ease-out-expo),
+    left 900ms var(--ease-out-expo),
+    right 900ms var(--ease-out-expo);
+}
+
+.top-line {
+  top: -7px;
+}
+
+.bottom-line {
+  bottom: -7px;
+  opacity: 0.18;
+}
+
+.search-field-shell:focus-within .search-line {
+  left: 4%;
+  right: 4%;
+  opacity: 0.62;
+}
+
+.search-echo {
+  position: absolute;
+  z-index: 1;
+  inset: 6px 20%;
+  border-radius: 999px;
+  background: rgba(130, 241, 255, 0.1);
+  filter: blur(22px);
+  opacity: 0.34;
+  transform: translateZ(-40px);
+  pointer-events: none;
+  transition:
+    opacity 900ms var(--ease-out-expo),
+    inset 900ms var(--ease-out-expo);
+}
+
+.search-field-shell:focus-within .search-echo {
+  inset: 0 8%;
+  opacity: 0.62;
+}
+
+/* ----------------------------- */
+/* HIDDEN SYSTEM FEEDBACK         */
+/* ----------------------------- */
+
+.system-whisper {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 48px);
+  z-index: 13;
+  transform: translateX(-50%) translateY(12px);
+  opacity: 0;
+  color: rgba(239, 235, 224, 0.38);
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  transition:
+    opacity 700ms var(--ease-out-expo),
+    transform 700ms var(--ease-out-expo),
+    filter 700ms var(--ease-out-expo);
+  filter: blur(4px);
+}
+
+.system-whisper.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  filter: blur(0);
+}
+
+/* ----------------------------- */
+/* STATES FOR FUTURE EVOLUTION    */
+/* ----------------------------- */
+
+.origin.searching .eye-video {
+  filter:
+    brightness(0.68)
+    contrast(1.22)
+    saturate(1.22)
+    hue-rotate(4deg);
+  transform:
+    translate3d(-50%, -50%, 0)
+    scale(1.115);
+}
+
+.origin.searching .atmosphere-fog {
+  opacity: 1;
+  filter: blur(30px);
+}
+
+.origin.searching .search-field-shell::before {
+  opacity: 1;
+  filter: blur(34px);
+}
+
+.origin.denied #portalInput {
+  animation: deniedPulse 900ms var(--ease-out-expo);
+}
+
+@keyframes deniedPulse {
+  0% {
+    transform: translateZ(52px) scale(1);
+  }
+
+  38% {
+    transform: translateZ(58px) scale(1.018);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.36),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.62),
+      inset 0 0 0 1px rgba(255, 120, 120, 0.3),
+      0 0 46px rgba(255, 70, 70, 0.18),
+      0 30px 110px rgba(0, 0, 0, 0.86);
+  }
+
+  100% {
+    transform: translateZ(52px) scale(1);
+  }
+}
+
+/* ----------------------------- */
+/* RESPONSIVE                    */
+/* ----------------------------- */
+
+@media (max-width: 900px) {
+  :root {
+    --search-width: min(500px, 76vw);
+    --search-height: 42px;
+  }
+
+  .eye-video {
+    object-fit: cover;
+    transform:
+      translate3d(-50%, -50%, 0)
+      scale(1.12);
+  }
+
+  @keyframes irisBreath {
+    0% {
+      transform:
+        translate3d(-50.2%, -50.1%, 0)
+        scale(1.1);
+    }
+
+    100% {
+      transform:
+        translate3d(-49.8%, -49.9%, 0)
+        scale(1.15);
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --search-width: min(380px, 74vw);
+    --search-height: 39px;
+  }
+
+  .eye-video {
+    transform:
+      translate3d(-50%, -50%, 0)
+      scale(1.22);
+  }
+
+  #portalInput {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+  }
+
+  #portalInput:focus {
+    letter-spacing: 0.2em;
+  }
+
+  .atmosphere-fog {
+    inset: -18%;
+    filter: blur(28px);
+  }
+
+  .system-whisper {
+    font-size: 0.56rem;
+    max-width: 80vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (min-aspect-ratio: 2 / 1) {
+  .eye-video {
+    transform:
+      translate3d(-50%, -50%, 0)
+      scale(1.02);
+  }
+}
+
+@media (max-aspect-ratio: 9 / 16) {
+  .eye-video {
+    transform:
+      translate3d(-50%, -50%, 0)
+      scale(1.28);
+  }
+}
+
+/* ----------------------------- */
+/* ACCESSIBILITY / PERFORMANCE   */
+/* ----------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .eye-video,
+  .atmosphere-fog,
+  .atmosphere-bloom,
+  .atmosphere-glass,
+  .atmosphere-noise,
+  .search-field-shell {
+    animation: none !important;
+  }
+
+  #portalInput,
+  .search-line,
+  .search-echo,
+  .system-whisper {
+    transition-duration: 120ms !important;
+  }
+}
+
+@supports not ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+  #portalInput {
+    background: rgba(4, 8, 10, 0.68);
   }
 }
