@@ -12,9 +12,19 @@
   const roomTitle = document.getElementById("roomTitle");
   const roomScaleLabel = document.getElementById("roomScaleLabel");
   const roomCodeLabel = document.getElementById("roomCodeLabel");
+  const profileToggle = document.getElementById("profileToggle");
+  const profileMenu = document.getElementById("profileMenu");
+  const profileName = document.getElementById("profileName");
+  const profileColor = document.getElementById("profileColor");
+  const profileGlyph = document.getElementById("profileGlyph");
+  const profileBio = document.getElementById("profileBio");
+  const profileSave = document.getElementById("profileSave");
   const boothsEl = document.getElementById("booths");
   const overflowEl = document.getElementById("overflowAvatars");
   const tvRoute = document.getElementById("tvRoute");
+  const routeOff = document.getElementById("routeOff");
+  const routeTv1 = document.getElementById("routeTv1");
+  const routeTv2 = document.getElementById("routeTv2");
   const tv1 = document.getElementById("tv1");
   const tv2 = document.getElementById("tv2");
   const shareScreen = document.getElementById("shareScreen");
@@ -54,6 +64,13 @@
     analyser: null,
     devicesReady: false,
     micMenuOpen: false,
+    profileMenuOpen: false,
+    profile: {
+      name: "You",
+      color: "#7f70ff",
+      glyph: "◈",
+      bio: ""
+    },
     micLevelSmooth: 0,
     micPeakHold: 0,
     whisperTimer: null,
@@ -73,6 +90,8 @@
     prepareEye();
     bindEvents();
     setMode("gate");
+    loadProfile();
+    syncProfileForm();
     renderLetters("");
     focusInputSoon();
     refreshDeviceMenus().catch(() => {});
@@ -87,6 +106,18 @@
     window.addEventListener("pointermove", onPointerMove, { passive: true });
 
     tvRoute.addEventListener("change", applyTvRouting);
+    routeOff.addEventListener("click", () => {
+      tvRoute.value = "none";
+      applyTvRouting();
+    });
+    routeTv1.addEventListener("click", () => {
+      tvRoute.value = "1";
+      applyTvRouting();
+    });
+    routeTv2.addEventListener("click", () => {
+      tvRoute.value = "2";
+      applyTvRouting();
+    });
     shareScreen.addEventListener("click", toggleScreenShare);
     micToggle.addEventListener("click", toggleMic);
     micMenuToggle.addEventListener("click", toggleMicMenu);
@@ -98,6 +129,8 @@
     nsToggle.addEventListener("change", reconfigureMicStream);
     agcToggle.addEventListener("change", reconfigureMicStream);
     leaveRoom.addEventListener("click", leaveRoomNow);
+    profileToggle.addEventListener("click", toggleProfileMenu);
+    profileSave.addEventListener("click", saveProfileFromForm);
 
     if (navigator.mediaDevices?.addEventListener) {
       navigator.mediaDevices.addEventListener("devicechange", refreshDeviceMenus);
@@ -193,7 +226,10 @@
 
     state.booths = Array.from({ length: boothCount }, (_, i) => ({
       id: i + 1,
-      name: i === 0 ? "You" : `Booth ${i + 1}`,
+      name: i === 0 ? state.profile.name : `Booth ${i + 1}`,
+      bio: i === 0 ? state.profile.bio : "",
+      glyph: i === 0 ? state.profile.glyph : "◉",
+      color: i === 0 ? state.profile.color : "",
       level: 0,
       muted: false,
       element: null,
@@ -236,8 +272,12 @@
       el.className = "booth" + (booth.id === state.activeBoothId ? " active" : "");
       el.dataset.id = String(booth.id);
       el.innerHTML = `
-        <div class="booth__head"><span>${booth.name}</span><button type="button" class="button button--ghost boothMute">Mute</button></div>
-        <div class="meter"><i></i></div>
+        <div class="booth__orb" style="${booth.color ? `background:${booth.color};box-shadow:0 0 24px ${booth.color}88;` : ""}">${booth.glyph || "◉"}</div>
+        <div class="booth__meta">
+          <div class="booth__head"><span>${booth.name}</span><button type="button" class="button button--ghost boothMute">Mute</button></div>
+          <p class="booth__bio">${booth.bio || "No bio yet."}</p>
+          <div class="meter"><i></i></div>
+        </div>
       `;
 
       booth.element = el;
@@ -269,10 +309,14 @@
   function syncBoothUi(booth) {
     if (!booth.element) return;
     booth.element.classList.toggle("muted", booth.muted);
+    const orb = booth.element.querySelector(".booth__orb");
     if (booth.muted) {
       booth.element.style.background = "rgba(120,120,120,.22)";
       booth.element.style.boxShadow = "none";
+      if (orb) orb.style.filter = "grayscale(1) saturate(.2)";
       if (booth.meter) booth.meter.style.width = "0%";
+    } else if (orb) {
+      orb.style.filter = "none";
     }
     const btn = booth.element.querySelector(".boothMute");
     if (btn) btn.textContent = booth.muted ? "Unmute" : "Mute";
@@ -323,6 +367,60 @@
     state.micMenuOpen = !state.micMenuOpen;
     micMenu.hidden = !state.micMenuOpen;
     micMenuToggle.setAttribute("aria-expanded", String(state.micMenuOpen));
+    micMenuToggle.classList.toggle("is-open", state.micMenuOpen);
+  }
+
+  function toggleProfileMenu() {
+    state.profileMenuOpen = !state.profileMenuOpen;
+    profileMenu.hidden = !state.profileMenuOpen;
+    profileToggle.setAttribute("aria-expanded", String(state.profileMenuOpen));
+  }
+
+  function loadProfile() {
+    try {
+      const raw = localStorage.getItem("the-eye-profile-v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      state.profile = {
+        name: String(parsed.name || "You").slice(0, 24),
+        color: String(parsed.color || "#7f70ff"),
+        glyph: String(parsed.glyph || "◈").slice(0, 2),
+        bio: String(parsed.bio || "").slice(0, 280)
+      };
+    } catch {
+      // ignore invalid profile cache
+    }
+  }
+
+  function syncProfileForm() {
+    profileName.value = state.profile.name;
+    profileColor.value = state.profile.color;
+    profileGlyph.value = state.profile.glyph;
+    profileBio.value = state.profile.bio;
+  }
+
+  function saveProfileFromForm() {
+    state.profile = {
+      name: String(profileName.value || "You").trim().slice(0, 24) || "You",
+      color: String(profileColor.value || "#7f70ff"),
+      glyph: String(profileGlyph.value || "◈").trim().slice(0, 2) || "◈",
+      bio: String(profileBio.value || "").trim().slice(0, 280)
+    };
+    try {
+      localStorage.setItem("the-eye-profile-v1", JSON.stringify(state.profile));
+    } catch {
+      // storage optional
+    }
+    const me = state.booths.find((b) => b.id === 1);
+    if (me) {
+      me.name = state.profile.name;
+      me.bio = state.profile.bio;
+      me.glyph = state.profile.glyph;
+      me.color = state.profile.color;
+      renderBooths(Math.max(state.booths.length, 2));
+      refreshActiveBooth();
+    }
+    setAudioStatus("Profile saved.");
   }
 
   async function refreshDeviceMenus() {
@@ -469,6 +567,8 @@
         tv?.classList.remove("on");
       }
     });
+    if (route === "none") setAudioStatus("TV routing off.");
+    else setAudioStatus(`Routing to TV ${route}${state.stream ? " (live)" : " (awaiting share)"}.`);
   }
 
   function stopScreenShare() {
@@ -492,6 +592,34 @@
     if (event.key === "Escape" && state.mode === "room") {
       leaveRoomNow();
       return;
+    }
+    if (state.mode === "room") {
+      const key = event.key.toLowerCase();
+      if (key === "m") {
+        event.preventDefault();
+        toggleMic();
+        return;
+      }
+      if (key === "v") {
+        event.preventDefault();
+        toggleMicMenu();
+        return;
+      }
+      if (key === "1") {
+        tvRoute.value = "1";
+        applyTvRouting();
+        return;
+      }
+      if (key === "2") {
+        tvRoute.value = "2";
+        applyTvRouting();
+        return;
+      }
+      if (key === "0") {
+        tvRoute.value = "none";
+        applyTvRouting();
+        return;
+      }
     }
     if (state.mode === "gate" && event.key.length === 1 && document.activeElement !== input) focusInputSoon();
   }
