@@ -94,12 +94,28 @@
 
         <div class="hud-actions">
           <button class="button button--ghost" id="micToggle" type="button">Mic: On</button>
+          <button class="button button--ghost" id="micMenuToggle" type="button" aria-expanded="false">Mic menu</button>
           <button class="button button--ghost" id="shareScreen" type="button">Share screen + audio</button>
           <button class="button button--ghost" id="leaveRoom" type="button">Leave</button>
         </div>
 
-        <label>Mic sensitivity<input id="micSensitivity" type="range" min="1" max="200" value="100" /></label>
-        <label>Others volume<input id="othersVolume" type="range" min="0" max="100" value="100" /></label>
+        <section class="mic-menu" id="micMenu" hidden aria-label="Microphone settings">
+          <label>Input device
+            <select id="micInputDevice" aria-label="Microphone input device"></select>
+          </label>
+          <label>Output device
+            <select id="audioOutputDevice" aria-label="Audio output device"></select>
+          </label>
+          <label>Mic gain<input id="micGain" type="range" min="0" max="200" value="100" /></label>
+          <label>Mic sensitivity<input id="micSensitivity" type="range" min="1" max="200" value="100" /></label>
+          <label>Others volume<input id="othersVolume" type="range" min="0" max="100" value="100" /></label>
+          <div class="mic-flags">
+            <label><input id="aecToggle" type="checkbox" checked /> Echo cancel</label>
+            <label><input id="nsToggle" type="checkbox" checked /> Noise suppress</label>
+            <label><input id="agcToggle" type="checkbox" checked /> Auto gain</label>
+          </div>
+          <p id="audioStatus" class="audio-status">Awaiting microphone permission.</p>
+        </section>
       </aside>
     </section>
   </main>

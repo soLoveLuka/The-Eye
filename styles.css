@@ -58,6 +58,10 @@ input, select { width: 100%; color: var(--bone); background: rgba(244,239,226,.0
 .booth-panel, .room-hud { position: fixed; width: min(360px, 32vw); border: 1px solid rgba(244,239,226,.12); border-radius: 24px; background: rgba(0,0,0,.48); backdrop-filter: blur(20px); padding: 18px; }
 .booth-panel { left: 20px; top: 20px; bottom: 20px; overflow: auto; }
 .room-hud { right: 20px; bottom: 20px; }
+.mic-menu { margin-top: 14px; display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(244,239,226,.12); }
+.mic-flags { display: grid; gap: 8px; margin-top: 4px; color: var(--bone-soft); font-size: .72rem; letter-spacing: .06em; }
+.mic-flags label { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .72rem; letter-spacing: .06em; text-transform: none; }
+.audio-status { margin: 0; color: rgba(244,239,226,.52); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
 .booths { display: grid; gap: 10px; margin-top: 12px; }
 .booth { border: 1px solid rgba(244,239,226,.14); border-radius: 14px; padding: 10px; background: rgba(44,44,70,.35); display: grid; gap: 8px; }
 .booth.active { box-shadow: 0 0 0 1px rgba(244,201,93,.5), 0 0 32px rgba(118,70,255,.28); }

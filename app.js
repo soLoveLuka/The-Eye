@@ -19,8 +19,17 @@
   const tv2 = document.getElementById("tv2");
   const shareScreen = document.getElementById("shareScreen");
   const micToggle = document.getElementById("micToggle");
+  const micMenuToggle = document.getElementById("micMenuToggle");
+  const micMenu = document.getElementById("micMenu");
+  const micInputDevice = document.getElementById("micInputDevice");
+  const audioOutputDevice = document.getElementById("audioOutputDevice");
+  const micGain = document.getElementById("micGain");
   const micSensitivity = document.getElementById("micSensitivity");
   const othersVolume = document.getElementById("othersVolume");
+  const aecToggle = document.getElementById("aecToggle");
+  const nsToggle = document.getElementById("nsToggle");
+  const agcToggle = document.getElementById("agcToggle");
+  const audioStatus = document.getElementById("audioStatus");
   const leaveRoom = document.getElementById("leaveRoom");
 
   const ROOM_SIZES = ["studio", "loft", "warehouse", "cathedral"];
@@ -40,7 +49,11 @@
     stream: null,
     audioStream: null,
     audioContext: null,
+    sourceNode: null,
+    gainNode: null,
     analyser: null,
+    devicesReady: false,
+    micMenuOpen: false,
     micLevelSmooth: 0,
     micPeakHold: 0,
     whisperTimer: null,
@@ -62,6 +75,7 @@
     setMode("gate");
     renderLetters("");
     focusInputSoon();
+    refreshDeviceMenus().catch(() => {});
     tickMic();
   }
 
@@ -75,8 +89,19 @@
     tvRoute.addEventListener("change", applyTvRouting);
     shareScreen.addEventListener("click", toggleScreenShare);
     micToggle.addEventListener("click", toggleMic);
+    micMenuToggle.addEventListener("click", toggleMicMenu);
+    micInputDevice.addEventListener("change", onMicDeviceChange);
+    audioOutputDevice.addEventListener("change", onOutputDeviceChange);
+    micGain.addEventListener("input", applyMicGain);
     othersVolume.addEventListener("input", applyOthersVolume);
+    aecToggle.addEventListener("change", reconfigureMicStream);
+    nsToggle.addEventListener("change", reconfigureMicStream);
+    agcToggle.addEventListener("change", reconfigureMicStream);
     leaveRoom.addEventListener("click", leaveRoomNow);
+
+    if (navigator.mediaDevices?.addEventListener) {
+      navigator.mediaDevices.addEventListener("devicechange", refreshDeviceMenus);
+    }
   }
 
   function onType() {
@@ -115,7 +140,7 @@
     state.interview.answers = {};
     state.interview.typing = "";
     input.value = "";
-    renderQuestionFrame(true);
+    renderQuestionFrame(false);
     setWhisper("ANSWER. PRESS ENTER.");
   }
 
@@ -187,6 +212,7 @@
     applyColorTheme(colors);
     ensureMicInput();
     applyTvRouting();
+    applyOthersVolume();
     setWhisper("");
     input.value = "";
   }
@@ -259,17 +285,105 @@
   async function ensureMicInput() {
     if (state.audioStream) return;
     try {
-      state.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      const ctx = new AudioContext();
+      state.audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: micInputDevice.value ? { exact: micInputDevice.value } : undefined,
+          echoCancellation: !!aecToggle.checked,
+          noiseSuppression: !!nsToggle.checked,
+          autoGainControl: !!agcToggle.checked
+        },
+        video: false
+      });
+      const ctx = state.audioContext || new AudioContext();
       const source = ctx.createMediaStreamSource(state.audioStream);
+      const gainNode = ctx.createGain();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
-      source.connect(analyser);
+      source.connect(gainNode);
+      gainNode.connect(analyser);
       state.audioContext = ctx;
+      state.sourceNode = source;
+      state.gainNode = gainNode;
       state.analyser = analyser;
+      applyMicGain();
+      await refreshDeviceMenus();
+      setAudioStatus("Mic live.");
       updateMicButton();
     } catch {
       setWhisper("MIC ACCESS DENIED");
+      setAudioStatus("Mic denied. Check browser permissions.");
+    }
+  }
+
+  function setAudioStatus(text) {
+    if (audioStatus) audioStatus.textContent = text;
+  }
+
+  function toggleMicMenu() {
+    state.micMenuOpen = !state.micMenuOpen;
+    micMenu.hidden = !state.micMenuOpen;
+    micMenuToggle.setAttribute("aria-expanded", String(state.micMenuOpen));
+  }
+
+  async function refreshDeviceMenus() {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const inputs = devices.filter((d) => d.kind === "audioinput");
+    const outputs = devices.filter((d) => d.kind === "audiooutput");
+
+    fillSelect(micInputDevice, inputs, "Default mic");
+    fillSelect(audioOutputDevice, outputs, "Default output");
+    state.devicesReady = true;
+  }
+
+  function fillSelect(select, devices, fallbackLabel) {
+    const current = select.value;
+    select.innerHTML = "";
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "";
+    defaultOpt.textContent = fallbackLabel;
+    select.appendChild(defaultOpt);
+    devices.forEach((d, i) => {
+      const opt = document.createElement("option");
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `${fallbackLabel} ${i + 1}`;
+      select.appendChild(opt);
+    });
+    if (current && [...select.options].some((o) => o.value === current)) select.value = current;
+  }
+
+  async function onMicDeviceChange() {
+    await reconfigureMicStream();
+  }
+
+  async function reconfigureMicStream() {
+    if (state.audioStream) {
+      state.audioStream.getTracks().forEach((t) => t.stop());
+      state.audioStream = null;
+    }
+    state.analyser = null;
+    await ensureMicInput();
+  }
+
+  function applyMicGain() {
+    if (!state.gainNode) return;
+    state.gainNode.gain.value = Number(micGain.value) / 100;
+  }
+
+  async function onOutputDeviceChange() {
+    const sinkId = audioOutputDevice.value;
+    const videos = [tv1, tv2].filter(Boolean);
+    for (const v of videos) {
+      if (typeof v.setSinkId === "function") {
+        try {
+          await v.setSinkId(sinkId || "default");
+          setAudioStatus("Output device updated.");
+        } catch {
+          setAudioStatus("Output device switch blocked by browser/device.");
+        }
+      } else {
+        setAudioStatus("Output switching unsupported on this device/browser.");
+      }
     }
   }
 
@@ -304,11 +418,14 @@
 
   function applyOthersVolume() {
     const factor = Number(othersVolume.value) / 100;
+    [tv1, tv2].forEach((v) => {
+      if (v) v.volume = clamp(factor, 0, 1);
+    });
     state.booths.forEach((booth) => {
-      if (booth.id === 1 || !booth.meter) return;
-      const lvl = booth.muted ? 0 : Math.round((20 + Math.random() * 60) * factor);
+      if (booth.id === 1 || !booth.meter || booth.muted) return;
+      const lvl = Math.round((booth.level || 24) * factor);
       booth.meter.style.width = `${lvl}%`;
-      if (!booth.muted) booth.element.style.background = `rgba(${70 + Math.round(lvl * 1.3)}, ${50 + Math.round(lvl * 0.35)}, 150, ${0.15 + lvl / 220})`;
+      booth.element.style.opacity = String(0.52 + factor * 0.48);
     });
   }
 
@@ -316,6 +433,7 @@
     state.micMuted = !state.micMuted;
     if (state.audioStream) state.audioStream.getAudioTracks().forEach((t) => { t.enabled = !state.micMuted; });
     updateMicButton();
+    setAudioStatus(state.micMuted ? "Mic muted." : "Mic live.");
   }
 
   function updateMicButton() {
@@ -412,39 +530,67 @@
   function renderLetters(rawValue) {
     const value = String(rawValue || "").toUpperCase();
     const clean = value.replace(/\s+/g, " ").trim();
-    typedWord.innerHTML = "";
+
     if (!clean) {
       typedWord.classList.add("empty");
+      typedWord.innerHTML = "";
       setDynamicType(0);
       return;
     }
     typedWord.classList.remove("empty");
 
-    clean.split("").forEach((char, index) => {
-      const span = document.createElement("span");
-      span.className = "letter";
-      span.textContent = char === " " ? "·" : char;
-      const seed = hash(`${char}-${index}-${clean.length}`);
-      const a = pseudo(seed), b = pseudo(seed + 19), c = pseudo(seed + 43), d = pseudo(seed + 71);
-      span.style.setProperty("--i", index);
-      span.style.setProperty("--shake-x", ((a - 0.5) * 2.8).toFixed(3));
-      span.style.setProperty("--shake-y", ((b - 0.5) * 2.5).toFixed(3));
-      span.style.setProperty("--shake-x2", ((c - 0.5) * 3.6).toFixed(3));
-      span.style.setProperty("--shake-y2", ((d - 0.5) * 3.2).toFixed(3));
-      span.style.setProperty("--rotate", ((a - 0.5) * 3.2).toFixed(3));
-      span.style.setProperty("--rotate2", ((b - 0.5) * 4.4).toFixed(3));
-      span.style.setProperty("--scale", (0.96 + c * 0.08).toFixed(3));
-      span.style.setProperty("--origin-x", ((a - 0.5) * 90).toFixed(3));
-      span.style.setProperty("--origin-y", ((b - 0.5) * 55).toFixed(3));
-      span.style.setProperty("--origin-rotate", ((c - 0.5) * 26).toFixed(3));
-      span.style.setProperty("--fall-x", ((a - 0.5) * 52).toFixed(3));
-      span.style.setProperty("--fall-y", (30 + b * 62).toFixed(3));
-      span.style.setProperty("--fall-rotate", ((d - 0.5) * 130).toFixed(3));
-      span.style.setProperty("--tremor-speed", `${(1.4 + d * 1.9).toFixed(3)}s`);
-      typedWord.appendChild(span);
-    });
+    const nextChars = clean.split("").map((char) => (char === " " ? "·" : char));
+    const currentSpans = Array.from(typedWord.querySelectorAll(".letter"));
+    const currentChars = currentSpans.map((span) => span.dataset.char || span.textContent || "");
+
+    let firstDiff = -1;
+    const shared = Math.min(currentChars.length, nextChars.length);
+    for (let i = 0; i < shared; i += 1) {
+      if (currentChars[i] !== nextChars[i]) {
+        firstDiff = i;
+        break;
+      }
+    }
+    if (firstDiff === -1 && currentChars.length !== nextChars.length) firstDiff = shared;
+    if (firstDiff === -1) {
+      setDynamicType(clean.length);
+      return;
+    }
+
+    for (let i = currentSpans.length - 1; i >= firstDiff; i -= 1) {
+      currentSpans[i].remove();
+    }
+
+    for (let index = firstDiff; index < nextChars.length; index += 1) {
+      typedWord.appendChild(createLetterSpan(nextChars[index], index));
+    }
 
     setDynamicType(clean.length);
+  }
+
+  function createLetterSpan(char, index) {
+    const span = document.createElement("span");
+    span.className = "letter";
+    span.textContent = char;
+    span.dataset.char = char;
+    const seed = hash(`${char}-${index}`);
+    const a = pseudo(seed), b = pseudo(seed + 19), c = pseudo(seed + 43), d = pseudo(seed + 71);
+    span.style.setProperty("--i", index);
+    span.style.setProperty("--shake-x", ((a - 0.5) * 2.8).toFixed(3));
+    span.style.setProperty("--shake-y", ((b - 0.5) * 2.5).toFixed(3));
+    span.style.setProperty("--shake-x2", ((c - 0.5) * 3.6).toFixed(3));
+    span.style.setProperty("--shake-y2", ((d - 0.5) * 3.2).toFixed(3));
+    span.style.setProperty("--rotate", ((a - 0.5) * 3.2).toFixed(3));
+    span.style.setProperty("--rotate2", ((b - 0.5) * 4.4).toFixed(3));
+    span.style.setProperty("--scale", (0.96 + c * 0.08).toFixed(3));
+    span.style.setProperty("--origin-x", ((a - 0.5) * 90).toFixed(3));
+    span.style.setProperty("--origin-y", ((b - 0.5) * 55).toFixed(3));
+    span.style.setProperty("--origin-rotate", ((c - 0.5) * 26).toFixed(3));
+    span.style.setProperty("--fall-x", ((a - 0.5) * 52).toFixed(3));
+    span.style.setProperty("--fall-y", (30 + b * 62).toFixed(3));
+    span.style.setProperty("--fall-rotate", ((d - 0.5) * 130).toFixed(3));
+    span.style.setProperty("--tremor-speed", `${(1.4 + d * 1.9).toFixed(3)}s`);
+    return span;
   }
 
   function setDynamicType(length) {
