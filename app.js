@@ -3,48 +3,50 @@
 
   const shell = document.getElementById("eyeShell");
   const video = document.getElementById("eyeVideo");
-  const form = document.getElementById("codeForm");
-  const input = document.getElementById("codeInput");
-  const typed = document.getElementById("typedCode");
-  const signal = document.getElementById("signal");
+  const form = document.getElementById("portalForm");
+  const input = document.getElementById("portalInput");
+  const typedWord = document.getElementById("typedWord");
+  const whisper = document.getElementById("whisper");
+
   const creator = document.getElementById("creator");
   const creatorForm = document.getElementById("creatorForm");
   const closeCreator = document.getElementById("closeCreator");
   const roomWord = document.getElementById("roomWord");
   const roomSize = document.getElementById("roomSize");
+  const boothCount = document.getElementById("boothCount");
   const fogLevel = document.getElementById("fogLevel");
   const backgroundPull = document.getElementById("backgroundPull");
-  const voiceReach = document.getElementById("voiceReach");
-  const screenReach = document.getElementById("screenReach");
+
   const voidRoom = document.getElementById("voidRoom");
-  const roomPlane = document.getElementById("roomPlane");
-  const avatar = document.getElementById("avatar");
   const roomTitle = document.getElementById("roomTitle");
   const roomScaleLabel = document.getElementById("roomScaleLabel");
   const roomCodeLabel = document.getElementById("roomCodeLabel");
-  const liveVoiceReach = document.getElementById("liveVoiceReach");
-  const liveScreenReach = document.getElementById("liveScreenReach");
-  const spectrum = document.getElementById("spectrum");
+  const boothsEl = document.getElementById("booths");
+  const overflowEl = document.getElementById("overflowAvatars");
+  const tvRoute = document.getElementById("tvRoute");
+  const tv1 = document.getElementById("tv1");
+  const tv2 = document.getElementById("tv2");
   const shareScreen = document.getElementById("shareScreen");
+  const micToggle = document.getElementById("micToggle");
+  const micSensitivity = document.getElementById("micSensitivity");
+  const othersVolume = document.getElementById("othersVolume");
   const leaveRoom = document.getElementById("leaveRoom");
-  const screenPortal = document.getElementById("screenPortal");
-  const screenVideo = document.getElementById("screenVideo");
 
-  const ROOM_SIZES = {
-    studio: "54vmin",
-    loft: "68vmin",
-    warehouse: "86vmin",
-    cathedral: "112vmin",
-    universe: "150vmax"
-  };
+  const ROOM_SIZES = { studio: "Studio", loft: "Loft", warehouse: "Warehouse", cathedral: "Cathedral" };
 
   const state = {
-    mouseX: 0,
-    mouseY: 0,
-    avatarX: 50,
-    avatarY: 50,
+    mode: "gate",
+    booths: [],
+    activeBoothId: 1,
+    micMuted: false,
     stream: null,
-    signalTimer: null
+    audioStream: null,
+    audioContext: null,
+    analyser: null,
+    micLevelSmooth: 0,
+    micPeakHold: 0,
+    whisperTimer: null,
+    fallTimer: null
   };
 
   init();
@@ -52,173 +54,261 @@
   function init() {
     lockViewport();
     prepareEye();
-    buildSpectrum();
     bindEvents();
     setMode("gate");
+    renderLetters("");
     focusInputSoon();
+    tickMic();
   }
 
   function bindEvents() {
     form.addEventListener("submit", onGateSubmit);
     input.addEventListener("input", onType);
-    window.addEventListener("click", () => shell.dataset.mode === "gate" && focusInputSoon());
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("click", () => state.mode === "gate" && focusInputSoon());
     window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("resize", lockViewport);
-    window.addEventListener("pageshow", () => { lockViewport(); playEye(); });
-    document.addEventListener("visibilitychange", () => !document.hidden && playEye());
 
-    closeCreator.addEventListener("click", () => returnToGate());
+    closeCreator.addEventListener("click", returnToGate);
     creatorForm.addEventListener("submit", onCreateRoom);
-    [fogLevel, backgroundPull, voiceReach, screenReach].forEach((control) => {
-      control.addEventListener("input", syncAtmosphereControls);
-    });
-    liveVoiceReach.addEventListener("input", () => setReach(liveVoiceReach.value, liveScreenReach.value));
-    liveScreenReach.addEventListener("input", () => setReach(liveVoiceReach.value, liveScreenReach.value));
-    roomPlane.addEventListener("pointerdown", moveAvatarFromEvent);
-    leaveRoom.addEventListener("click", leaveVoid);
-    shareScreen.addEventListener("click", requestScreenShare);
+
+    tvRoute.addEventListener("change", applyTvRouting);
+    shareScreen.addEventListener("click", toggleScreenShare);
+    micToggle.addEventListener("click", toggleMic);
+    othersVolume.addEventListener("input", applyOthersVolume);
+    leaveRoom.addEventListener("click", leaveRoomNow);
   }
 
   function onType() {
     const value = normalizeCode(input.value);
     input.value = value;
-    typed.textContent = value;
-    if (value) whisper("", false);
+    renderLetters(value);
   }
 
   function onGateSubmit(event) {
     event.preventDefault();
     const code = normalizeCode(input.value);
-    if (!code) return pulse("TYPE TO OPEN THE EYE");
-    if (code === "CREATE") return openCreator();
-    enterRoom({ code, size: "studio", fog: 62, pull: 74, voice: 32, screen: 45, created: false });
+    if (code !== "CREATE") {
+      triggerFall();
+      setWhisper("TYPE CREATE TO START A ROOM");
+      return;
+    }
+    triggerFall();
+    setTimeout(openCreator, 350);
   }
 
   function openCreator() {
     setMode("creator");
     creator.setAttribute("aria-hidden", "false");
-    input.blur();
     if (!roomWord.value) roomWord.value = generateRoomWord();
-    syncAtmosphereControls();
-    setTimeout(() => roomWord.focus(), 650);
+    setTimeout(() => roomWord.focus(), 300);
   }
 
   function onCreateRoom(event) {
     event.preventDefault();
     const code = normalizeCode(roomWord.value || generateRoomWord());
-    enterRoom({
-      code,
-      size: roomSize.value,
-      fog: Number(fogLevel.value),
-      pull: Number(backgroundPull.value),
-      voice: Number(voiceReach.value),
-      screen: Number(screenReach.value),
-      created: true
-    });
-  }
+    const count = clamp(parseInt(boothCount.value || "8", 10), 2, 40);
 
-  function enterRoom(config) {
+    state.booths = Array.from({ length: Math.min(count, 20) }, (_, i) => ({
+      id: i + 1,
+      name: i === 0 ? "You" : `Booth ${i + 1}`,
+      level: 0,
+      muted: false,
+      element: null,
+      meter: null
+    }));
+    state.activeBoothId = 1;
+
+    renderBooths(count);
     setMode("room");
     creator.setAttribute("aria-hidden", "true");
     voidRoom.setAttribute("aria-hidden", "false");
-    roomTitle.textContent = config.code;
-    roomCodeLabel.textContent = config.created ? "Created room" : "Joined room";
-    roomScaleLabel.textContent = labelForSize(config.size);
-    shell.style.setProperty("--room-size", ROOM_SIZES[config.size] || ROOM_SIZES.studio);
-    shell.style.setProperty("--fog", config.fog);
-    shell.style.setProperty("--pull", config.pull);
-    liveVoiceReach.value = config.voice;
-    liveScreenReach.value = config.screen;
-    setReach(config.voice, config.screen);
-    input.value = "";
-    typed.textContent = "";
-    whisper("A TEMPORARY CHANNEL EXISTS WHILE PRESENCE HOLDS IT", true);
-    avatar.focus({ preventScroll: true });
+    roomTitle.textContent = code;
+    roomCodeLabel.textContent = "Created room";
+    roomScaleLabel.textContent = ROOM_SIZES[roomSize.value] || "Studio";
+    shell.style.setProperty("--fog", String(fogLevel.value));
+    shell.style.setProperty("--pull", String(backgroundPull.value));
+
+    ensureMicInput();
+    applyTvRouting();
+    setWhisper("");
   }
 
-  function leaveVoid() {
-    stopScreenShare();
-    returnToGate();
+  function renderBooths(totalParticipants) {
+    boothsEl.innerHTML = "";
+    state.booths.forEach((booth) => {
+      const el = document.createElement("article");
+      el.className = "booth" + (booth.id === state.activeBoothId ? " active" : "");
+      el.dataset.id = String(booth.id);
+      el.innerHTML = `
+        <div class="booth__head"><span>${booth.name}</span><button type="button" class="button button--ghost boothMute">Mute</button></div>
+        <div class="meter"><i></i></div>
+      `;
+      const meter = el.querySelector(".meter i");
+      booth.element = el;
+      booth.meter = meter;
+
+      el.addEventListener("click", (e) => {
+        if (e.target instanceof HTMLElement && e.target.classList.contains("boothMute")) {
+          booth.muted = !booth.muted;
+          syncBoothUi(booth);
+          return;
+        }
+        state.activeBoothId = booth.id;
+        refreshActiveBooth();
+      });
+
+      boothsEl.appendChild(el);
+      syncBoothUi(booth);
+    });
+
+    if (totalParticipants > 20) {
+      overflowEl.hidden = false;
+      overflowEl.textContent = `${totalParticipants - 20} more participants are shown as side avatars.`;
+    } else {
+      overflowEl.hidden = true;
+      overflowEl.textContent = "";
+    }
   }
 
-  async function requestScreenShare() {
-    if (!navigator.mediaDevices?.getDisplayMedia) {
-      pulse("SCREEN SHARING NEEDS A SECURE BROWSER CONTEXT");
+  function syncBoothUi(booth) {
+    if (!booth.element) return;
+    booth.element.classList.toggle("muted", booth.muted);
+    if (booth.muted) {
+      booth.element.style.background = "rgba(120,120,120,.22)";
+      booth.element.style.boxShadow = "none";
+      if (booth.meter) booth.meter.style.width = "0%";
+    }
+    const btn = booth.element.querySelector(".boothMute");
+    if (btn) btn.textContent = booth.muted ? "Unmute" : "Mute";
+  }
+
+  function refreshActiveBooth() {
+    state.booths.forEach((booth) => booth.element?.classList.toggle("active", booth.id === state.activeBoothId));
+  }
+
+  async function ensureMicInput() {
+    if (state.audioStream) return;
+    try {
+      state.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const ctx = new AudioContext();
+      const source = ctx.createMediaStreamSource(state.audioStream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      state.audioContext = ctx;
+      state.analyser = analyser;
+      updateMicButton();
+    } catch {
+      setWhisper("MIC ACCESS DENIED");
+    }
+  }
+
+  function tickMic() {
+    if (state.mode === "room" && state.analyser && !state.micMuted) {
+      const data = new Uint8Array(state.analyser.frequencyBinCount);
+      state.analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length;
+      const sensitivity = Number(micSensitivity.value) / 100;
+      const raw = clamp((avg / 255) * 100 * sensitivity, 0, 100);
+      const gate = 6;
+      const gated = raw < gate ? 0 : raw;
+      const attack = 0.32;
+      const release = 0.1;
+      const coeff = gated > state.micLevelSmooth ? attack : release;
+      state.micLevelSmooth += (gated - state.micLevelSmooth) * coeff;
+      state.micPeakHold = Math.max(state.micPeakHold * 0.95, state.micLevelSmooth);
+      const level = clamp(Math.round(state.micLevelSmooth), 0, 100);
+      const active = state.booths.find((b) => b.id === state.activeBoothId);
+      if (active && !active.muted) {
+        active.level = level;
+        if (active.meter) active.meter.style.width = `${level}%`;
+        const glow = Math.max(0.14, level / 90);
+        const peak = clamp(Math.round(state.micPeakHold), 0, 100);
+        active.element.style.background = `linear-gradient(120deg, rgba(${Math.round(44 + peak)}, ${Math.round(52 + level / 3)}, 255, ${glow}), rgba(${Math.round(180 + level / 4)}, ${Math.round(24 + level / 5)}, ${Math.round(110 + peak / 2)}, ${Math.max(0.18, glow * 0.7)}))`;
+        active.element.style.boxShadow = `0 0 ${10 + level * 0.45}px rgba(95, 128, 255, ${Math.min(0.58, glow)}), 0 0 ${8 + level * 0.25}px rgba(215, 48, 122, ${Math.min(0.45, glow * 0.8)})`;
+      }
+    }
+    requestAnimationFrame(tickMic);
+  }
+
+  function applyOthersVolume() {
+    const factor = Number(othersVolume.value) / 100;
+    state.booths.forEach((booth) => {
+      if (booth.id === 1 || !booth.meter) return;
+      const lvl = booth.muted ? 0 : Math.round((20 + Math.random() * 60) * factor);
+      booth.meter.style.width = `${lvl}%`;
+      if (!booth.muted) {
+        booth.element.style.background = `rgba(${70 + Math.round(lvl * 1.3)}, ${50 + Math.round(lvl * 0.35)}, 150, ${0.15 + lvl / 220})`;
+      }
+    });
+  }
+
+  function toggleMic() {
+    state.micMuted = !state.micMuted;
+    if (state.audioStream) state.audioStream.getAudioTracks().forEach((t) => { t.enabled = !state.micMuted; });
+    updateMicButton();
+  }
+
+  function updateMicButton() {
+    micToggle.textContent = `Mic: ${state.micMuted ? "Off" : "On"}`;
+  }
+
+  async function toggleScreenShare() {
+    if (state.stream) {
+      stopScreenShare();
       return;
     }
     try {
-      stopScreenShare();
       state.stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      screenVideo.srcObject = state.stream;
-      screenPortal.classList.add("is-live");
-      const [track] = state.stream.getVideoTracks();
-      track?.addEventListener("ended", stopScreenShare, { once: true });
-    } catch (error) {
-      pulse("SCREEN SIGNAL CANCELLED");
+      applyTvRouting();
+      shareScreen.textContent = "Stop share";
+      const track = state.stream.getVideoTracks()[0];
+      if (track) track.addEventListener("ended", stopScreenShare, { once: true });
+    } catch {
+      setWhisper("SCREEN SHARE CANCELLED");
     }
+  }
+
+  function applyTvRouting() {
+    const route = tvRoute.value;
+    [{ id: "1", el: tv1 }, { id: "2", el: tv2 }].forEach(({ id, el }) => {
+      const tv = el.closest(".tv");
+      if (route === id && state.stream) {
+        el.srcObject = state.stream;
+        el.muted = false;
+        tv?.classList.add("on");
+      } else {
+        el.srcObject = null;
+        tv?.classList.remove("on");
+      }
+    });
   }
 
   function stopScreenShare() {
-    if (state.stream) state.stream.getTracks().forEach((track) => track.stop());
+    if (state.stream) state.stream.getTracks().forEach((t) => t.stop());
     state.stream = null;
-    screenVideo.srcObject = null;
-    screenPortal.classList.remove("is-live");
+    applyTvRouting();
+    shareScreen.textContent = "Share screen + audio";
   }
 
-  function moveAvatarFromEvent(event) {
-    const rect = roomPlane.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setAvatar(clamp(x, 3, 97), clamp(y, 3, 97));
-  }
-
-  function onKeyDown(event) {
-    if (event.key === "Escape") {
-      if (shell.dataset.mode === "room") return leaveVoid();
-      if (shell.dataset.mode === "creator") return returnToGate();
-    }
-    if (shell.dataset.mode === "room") {
-      const step = event.shiftKey ? 6 : 2.8;
-      if (event.key === "ArrowUp") setAvatar(state.avatarX, state.avatarY - step);
-      if (event.key === "ArrowDown") setAvatar(state.avatarX, state.avatarY + step);
-      if (event.key === "ArrowLeft") setAvatar(state.avatarX - step, state.avatarY);
-      if (event.key === "ArrowRight") setAvatar(state.avatarX + step, state.avatarY);
-      return;
-    }
-    if (shell.dataset.mode === "gate" && event.key.length === 1 && document.activeElement !== input) focusInputSoon();
-  }
-
-  function setAvatar(x, y) {
-    state.avatarX = clamp(x, 3, 97);
-    state.avatarY = clamp(y, 3, 97);
-    shell.style.setProperty("--avatar-x", `${state.avatarX}%`);
-    shell.style.setProperty("--avatar-y", `${state.avatarY}%`);
-  }
-
-  function setReach(voice, screen) {
-    shell.style.setProperty("--voice", clamp(Number(voice), 8, 100));
-    shell.style.setProperty("--screen", clamp(Number(screen), 8, 100));
-  }
-
-  function syncAtmosphereControls() {
-    shell.style.setProperty("--fog", fogLevel.value);
-    shell.style.setProperty("--pull", backgroundPull.value);
-    setReach(voiceReach.value, screenReach.value);
-  }
-
-  function setMode(mode) {
-    shell.dataset.mode = mode;
+  function leaveRoomNow() {
+    stopScreenShare();
+    returnToGate();
   }
 
   function returnToGate() {
     setMode("gate");
     creator.setAttribute("aria-hidden", "true");
     voidRoom.setAttribute("aria-hidden", "true");
-    typed.textContent = "";
     input.value = "";
-    whisper("", false);
+    renderLetters("");
+    setWhisper("");
     focusInputSoon();
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    shell.dataset.mode = mode;
   }
 
   function prepareEye() {
@@ -228,68 +318,78 @@
     playEye();
   }
 
-  function playEye() {
-    video.play().catch(() => {});
-  }
+  function playEye() { video.play().catch(() => {}); }
 
   function onPointerMove(event) {
-    state.mouseX = clamp((event.clientX / window.innerWidth - 0.5) * 2, -1, 1);
-    state.mouseY = clamp((event.clientY / window.innerHeight - 0.5) * 2, -1, 1);
-    shell.style.setProperty("--mx", state.mouseX.toFixed(3));
-    shell.style.setProperty("--my", state.mouseY.toFixed(3));
+    const mx = clamp((event.clientX / window.innerWidth - 0.5) * 2, -1, 1);
+    const my = clamp((event.clientY / window.innerHeight - 0.5) * 2, -1, 1);
+    shell.style.setProperty("--mx", mx.toFixed(3));
+    shell.style.setProperty("--my", my.toFixed(3));
   }
 
-  function buildSpectrum() {
-    const fragment = document.createDocumentFragment();
-    for (let i = 0; i < 40; i += 1) {
-      const bar = document.createElement("i");
-      bar.style.setProperty("--i", i);
-      bar.style.setProperty("--h", 12 + Math.round(Math.abs(Math.sin(i * 0.72)) * 74));
-      fragment.appendChild(bar);
-    }
-    spectrum.appendChild(fragment);
+  function triggerFall() {
+    typedWord.classList.remove("falling");
+    void typedWord.offsetWidth;
+    typedWord.classList.add("falling");
+    clearTimeout(state.fallTimer);
+    state.fallTimer = setTimeout(() => typedWord.classList.remove("falling"), 1300);
   }
 
-  function whisper(message, persistent = false) {
-    clearTimeout(state.signalTimer);
-    signal.textContent = message;
-    signal.classList.toggle("is-visible", Boolean(message));
-    if (message && !persistent) state.signalTimer = setTimeout(() => whisper("", false), 1500);
+  function renderLetters(rawValue) {
+    const value = normalizeCode(rawValue);
+    const clean = value.replace(/\s+/g, " ").trim();
+    typedWord.innerHTML = "";
+    if (!clean) { typedWord.classList.add("empty"); setDynamicType(0); return; }
+    typedWord.classList.remove("empty");
+
+    clean.split("").forEach((char, index) => {
+      const span = document.createElement("span");
+      span.className = "letter";
+      span.textContent = char === " " ? "·" : char;
+      const seed = hash(`${char}-${index}-${clean.length}`);
+      const a = pseudo(seed), b = pseudo(seed + 19), c = pseudo(seed + 43), d = pseudo(seed + 71);
+      span.style.setProperty("--i", index);
+      span.style.setProperty("--shake-x", ((a - 0.5) * 2.8).toFixed(3));
+      span.style.setProperty("--shake-y", ((b - 0.5) * 2.5).toFixed(3));
+      span.style.setProperty("--shake-x2", ((c - 0.5) * 3.6).toFixed(3));
+      span.style.setProperty("--shake-y2", ((d - 0.5) * 3.2).toFixed(3));
+      span.style.setProperty("--rotate", ((a - 0.5) * 3.2).toFixed(3));
+      span.style.setProperty("--rotate2", ((b - 0.5) * 4.4).toFixed(3));
+      span.style.setProperty("--scale", (0.96 + c * 0.08).toFixed(3));
+      span.style.setProperty("--origin-x", ((a - 0.5) * 90).toFixed(3));
+      span.style.setProperty("--origin-y", ((b - 0.5) * 55).toFixed(3));
+      span.style.setProperty("--origin-rotate", ((c - 0.5) * 26).toFixed(3));
+      span.style.setProperty("--fall-x", ((a - 0.5) * 52).toFixed(3));
+      span.style.setProperty("--fall-y", (30 + b * 62).toFixed(3));
+      span.style.setProperty("--fall-rotate", ((d - 0.5) * 130).toFixed(3));
+      span.style.setProperty("--tremor-speed", `${(1.4 + d * 1.9).toFixed(3)}s`);
+      typedWord.appendChild(span);
+    });
+
+    setDynamicType(clean.length);
   }
 
-  function pulse(message) {
-    whisper(message);
-    typed.animate([
-      { transform: "translate(-50%, -50%) translateY(72px) scale(1)", filter: "blur(0)" },
-      { transform: "translate(-50%, -50%) translateY(72px) scale(1.035)", filter: "blur(1px)" },
-      { transform: "translate(-50%, -50%) translateY(72px) scale(1)", filter: "blur(0)" }
-    ], { duration: 520, easing: "cubic-bezier(.16,1,.3,1)" });
+  function setDynamicType(length) {
+    const viewportFactor = Math.min(window.innerWidth, 900) / 900;
+    const size = length <= 4 ? 46 : length <= 8 ? 38 : length <= 12 ? 31 : length <= 18 ? 24 : 18;
+    const finalSize = Math.max(11, size * Math.max(0.72, viewportFactor));
+    const spacing = length > 18 ? 0.045 : length > 10 ? 0.08 : 0.14;
+    typedWord.style.setProperty("--letter-size", `${finalSize.toFixed(2)}px`);
+    typedWord.style.setProperty("--letter-spacing", `${spacing.toFixed(3)}em`);
   }
 
-  function focusInputSoon() {
-    setTimeout(() => input.focus({ preventScroll: true }), 80);
+  function setWhisper(message) {
+    clearTimeout(state.whisperTimer);
+    whisper.textContent = message || "";
+    whisper.classList.toggle("visible", Boolean(message));
+    if (message) state.whisperTimer = setTimeout(() => whisper.classList.remove("visible"), 1800);
   }
 
-  function lockViewport() {
-    window.scrollTo(0, 0);
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-  }
-
-  function normalizeCode(value) {
-    return String(value || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 18);
-  }
-
-  function generateRoomWord() {
-    const words = ["NIGHTRADIO", "VOIDROOM", "SOFTSIGNAL", "BLACKWATER", "STARFIELD", "GLASSHOUSE"];
-    return words[Math.floor(Math.random() * words.length)];
-  }
-
-  function labelForSize(value) {
-    return ({ studio: "Studio", loft: "Loft", warehouse: "Warehouse", cathedral: "Cathedral", universe: "Universe" })[value] || "Studio";
-  }
-
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
+  function focusInputSoon() { setTimeout(() => input.focus({ preventScroll: true }), 80); }
+  function lockViewport() { window.scrollTo(0, 0); document.documentElement.style.overflow = "hidden"; document.body.style.overflow = "hidden"; }
+  function normalizeCode(value) { return String(value || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 18); }
+  function generateRoomWord() { const words = ["NIGHTRADIO", "VOIDROOM", "SOFTSIGNAL", "BLACKWATER", "STARFIELD", "GLASSHOUSE"]; return words[Math.floor(Math.random() * words.length)]; }
+  function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+  function hash(inputValue) { let h = 2166136261; for (let i = 0; i < inputValue.length; i += 1) { h ^= inputValue.charCodeAt(i); h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24); } return h >>> 0; }
+  function pseudo(seed) { let t = seed + 0x6D2B79F5; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
 })();

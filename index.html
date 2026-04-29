@@ -4,86 +4,59 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
-  <meta
-    name="description"
-    content="The Eye is an artist-forward temporary screen-sharing space: private rooms, spatial presence, custom atmosphere, and conversation held in the void."
-  />
+  <meta name="description" content="The Eye is an artist-forward temporary screen-sharing space: private rooms, studio booths, TV routing, and conversation held in the void." />
   <title>The Eye</title>
   <link rel="preload" href="assets/eye-loop.mp4" as="video" type="video/mp4" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="eye-shell" id="eyeShell" data-mode="gate">
-    <h1 class="sr-only">The Eye: private temporary rooms for screen sharing, spatial conversation, and customizable human presence.</h1>
-    <p class="sr-only">A privacy-forward social platform for temporary channels, trusted conversation, artist-made rooms, and screen sharing without permanent servers.</p>
-    <section class="gate" aria-label="The Eye entry gate">
-      <video class="eye-video" id="eyeVideo" autoplay muted loop playsinline preload="auto">
-        <source src="assets/eye-loop.mp4" type="video/mp4" />
-      </video>
-      <div class="eye-fallback" aria-hidden="true"></div>
-      <div class="atmosphere atmosphere--fog" aria-hidden="true"></div>
-      <div class="atmosphere atmosphere--grain" aria-hidden="true"></div>
-      <div class="atmosphere atmosphere--vignette" aria-hidden="true"></div>
+    <h1 class="sr-only">The Eye</h1>
 
-      <form class="code-form" id="codeForm" autocomplete="off" aria-label="Enter room code or creation word">
-        <input
-          class="code-input"
-          id="codeInput"
-          type="text"
-          inputmode="text"
-          autocomplete="off"
-          autocapitalize="characters"
-          spellcheck="false"
-          aria-label="Type a room code or CREATE"
-        />
+    <section class="gate" aria-label="The Eye entry gate">
+      <div class="scene-bend" aria-hidden="true">
+        <div class="video-stage">
+          <video class="eye-video" id="eyeVideo" autoplay muted loop playsinline preload="auto">
+            <source src="assets/eye-loop.mp4" type="video/mp4" />
+          </video>
+        </div>
+      </div>
+      <div class="eye-fallback" aria-hidden="true"></div>
+
+      <form id="portalForm" autocomplete="off" aria-label="Type CREATE to start a room">
+        <input class="invisible-input" id="portalInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Type CREATE" />
       </form>
 
-      <div class="typed-code" id="typedCode" aria-hidden="true"></div>
-      <div class="signal" id="signal" aria-live="polite"></div>
+      <section class="portal" id="portal" aria-hidden="true"><div class="typed-word empty" id="typedWord"></div></section>
+      <div class="whisper" id="whisper" aria-live="polite"></div>
     </section>
 
     <section class="creator" id="creator" aria-labelledby="creatorTitle" aria-hidden="true">
       <div class="creator__veil" aria-hidden="true"></div>
       <form class="creator__panel" id="creatorForm">
         <p class="eyebrow">Temporary channel</p>
-        <h2 id="creatorTitle">Create a room held open by presence.</h2>
-        <p class="creator__copy">
-          No servers to decorate. No permanent town square. A private void exists while people are inside it.
-        </p>
+        <h2 id="creatorTitle">Create a studio room.</h2>
 
-        <label>
-          Room word
+        <label>Room word
           <input id="roomWord" name="roomWord" maxlength="18" placeholder="NIGHTRADIO" aria-label="Room word" />
         </label>
 
-        <label>
-          Room size
+        <label>Room size
           <select id="roomSize" name="roomSize" aria-label="Room size">
             <option value="studio">Studio</option>
             <option value="loft">Loft</option>
             <option value="warehouse">Warehouse</option>
             <option value="cathedral">Cathedral</option>
-            <option value="universe">Universe</option>
           </select>
         </label>
 
+        <label>Booths / participants
+          <input id="boothCount" name="boothCount" type="number" min="2" max="40" value="8" aria-label="Booth count" />
+        </label>
+
         <div class="creator__grid">
-          <label>
-            Fog
-            <input id="fogLevel" name="fogLevel" type="range" min="0" max="100" value="62" aria-label="Fog" />
-          </label>
-          <label>
-            Background pull
-            <input id="backgroundPull" name="backgroundPull" type="range" min="0" max="100" value="74" aria-label="Background pull" />
-          </label>
-          <label>
-            Voice reach
-            <input id="voiceReach" name="voiceReach" type="range" min="8" max="100" value="32" aria-label="Voice reach" />
-          </label>
-          <label>
-            Screen reach
-            <input id="screenReach" name="screenReach" type="range" min="8" max="100" value="45" aria-label="Screen reach" />
-          </label>
+          <label>Fog<input id="fogLevel" name="fogLevel" type="range" min="0" max="100" value="62" aria-label="Fog" /></label>
+          <label>Background pull<input id="backgroundPull" name="backgroundPull" type="range" min="0" max="100" value="74" aria-label="Background pull" /></label>
         </div>
 
         <div class="creator__actions">
@@ -96,42 +69,38 @@
     <section class="void" id="voidRoom" aria-labelledby="roomTitle" aria-hidden="true">
       <div class="void__background" id="voidBackground" aria-hidden="true"></div>
       <div class="void__stars" aria-hidden="true"></div>
-      <div class="room-plane" id="roomPlane">
-        <div class="range range--voice" id="voiceRange" aria-hidden="true"></div>
-        <div class="range range--screen" id="screenRange" aria-hidden="true"></div>
-        <div class="avatar" id="avatar" tabindex="0" aria-label="Your position in the room">
-          <span></span>
-        </div>
-        <div class="ghost ghost--one" aria-hidden="true"></div>
-        <div class="ghost ghost--two" aria-hidden="true"></div>
-        <div class="ghost ghost--three" aria-hidden="true"></div>
-      </div>
 
-      <aside class="room-hud" aria-label="Room controls">
+      <aside class="booth-panel">
         <p class="eyebrow" id="roomCodeLabel">Room</p>
-        <h2 id="roomTitle">The Void</h2>
+        <h2 id="roomTitle">The Studio</h2>
         <p id="roomScaleLabel">Studio</p>
-        <div class="hud-row">
-          <label>
-            Voice reach
-            <input id="liveVoiceReach" type="range" min="8" max="100" value="32" aria-label="Live voice reach" />
-          </label>
-          <label>
-            Screen reach
-            <input id="liveScreenReach" type="range" min="8" max="100" value="45" aria-label="Live screen reach" />
-          </label>
-        </div>
-        <div class="spectrum" id="spectrum" aria-hidden="true"></div>
-        <div class="hud-actions">
-          <button class="button button--ghost" id="shareScreen" type="button">Start screen share</button>
-          <button class="button button--ghost" id="leaveRoom" type="button">Leave</button>
-        </div>
+        <div class="booths" id="booths"></div>
+        <div class="overflow" id="overflowAvatars" hidden></div>
       </aside>
 
-      <div class="screen-portal" id="screenPortal" aria-hidden="true">
-        <video id="screenVideo" autoplay muted playsinline></video>
-        <span>screen signal</span>
-      </div>
+      <section class="screen-wall" aria-label="TV wall">
+        <article class="tv" data-tv="1"><header>TV 1</header><video id="tv1" autoplay muted playsinline></video><p>OFFLINE</p></article>
+        <article class="tv" data-tv="2"><header>TV 2</header><video id="tv2" autoplay muted playsinline></video><p>OFFLINE</p></article>
+      </section>
+
+      <aside class="room-hud" aria-label="Room controls">
+        <label>Route your booth to TV
+          <select id="tvRoute" aria-label="TV route">
+            <option value="none">Off</option>
+            <option value="1">TV 1</option>
+            <option value="2">TV 2</option>
+          </select>
+        </label>
+
+        <div class="hud-actions">
+          <button class="button button--ghost" id="micToggle" type="button">Mic: On</button>
+          <button class="button button--ghost" id="shareScreen" type="button">Share screen + audio</button>
+          <button class="button button--ghost" id="leaveRoom" type="button">Leave</button>
+        </div>
+
+        <label>Mic sensitivity<input id="micSensitivity" type="range" min="1" max="200" value="100" /></label>
+        <label>Others volume<input id="othersVolume" type="range" min="0" max="100" value="100" /></label>
+      </aside>
     </section>
   </main>
 
