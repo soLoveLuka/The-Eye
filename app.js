@@ -53,6 +53,9 @@
   const roomHud = document.getElementById("roomHud");
   const inviteCode = document.getElementById("inviteCode");
   const regenInvite = document.getElementById("regenInvite");
+  const pulseInput = document.getElementById("pulseInput");
+  const pulseSend = document.getElementById("pulseSend");
+  const pulseFeed = document.getElementById("pulseFeed");
   const accessInviteHint = document.getElementById("accessInviteHint");
   const SIGNAL_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
   const DEMO_MASTER_CODE = "FM0NPMO3SV9OS50";
@@ -309,6 +312,12 @@
     profileSave?.addEventListener("click", saveProfileFromForm);
     curtainToggle.addEventListener("click", toggleCurtains);
     regenInvite.addEventListener("click", regenInviteCode);
+    pulseSend?.addEventListener("click", sendPulse);
+    pulseInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      sendPulse();
+    });
 
     if (navigator.mediaDevices?.addEventListener) {
       navigator.mediaDevices.addEventListener("devicechange", refreshDeviceMenus);
@@ -370,9 +379,34 @@
       setAudioStatus(msg.message);
       return;
     }
+    if (msg.type === "pulse") {
+      addPulse(msg.fromName || "Anon", msg.text || "");
+      return;
+    }
     if (msg.type === "webrtc_signal") {
       handleWebRtcSignal(msg);
     }
+  }
+
+  function sendPulse() {
+    const text = String(pulseInput?.value || "").trim().slice(0, 160);
+    if (!text) return;
+    sendSocket({ type: "pulse", roomCode: state.roomCode, text });
+    if (pulseInput) pulseInput.value = "";
+  }
+
+  function addPulse(name, text) {
+    if (!pulseFeed || !text) return;
+    const item = document.createElement("div");
+    item.className = "pulse-item";
+    item.innerHTML = `<strong>${escapeHtml(name)}:</strong>${escapeHtml(text)}`;
+    pulseFeed.prepend(item);
+    while (pulseFeed.children.length > 16) pulseFeed.lastElementChild?.remove();
+    setTimeout(() => item.remove(), 45000);
+  }
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/[&<>'\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[c] || c));
   }
 
   function applyServerRoomState(msg) {

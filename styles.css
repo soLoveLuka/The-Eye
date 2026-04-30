@@ -124,6 +124,11 @@ kbd { padding: 1px 5px; border: 1px solid rgba(244,239,226,.28); border-radius: 
 .mic-flags { display: grid; gap: 8px; margin-top: 4px; color: var(--bone-soft); font-size: .72rem; letter-spacing: .06em; }
 .mic-flags label { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .72rem; letter-spacing: .06em; text-transform: none; }
 .audio-status { margin: 0; color: rgba(244,239,226,.52); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.pulse-panel { margin-top: 14px; display: grid; gap: 8px; }
+.pulse-actions { display: flex; justify-content: flex-end; }
+.pulse-feed { min-height: 72px; max-height: 180px; overflow: auto; display: grid; gap: 6px; }
+.pulse-item { font-size: .68rem; letter-spacing: .06em; color: rgba(244,239,226,.86); padding: 6px 0; border-bottom: 1px solid rgba(244,239,226,.08); }
+.pulse-item strong { color: rgba(244,201,93,.92); margin-right: 6px; }
 .booths { display: grid; gap: 10px; margin-top: 12px; }
 .booth { border: 0; border-radius: 999px; padding: 10px 12px; background: radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), rgba(130,70,255,.16) 44%, rgba(12,9,28,.56)); display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 10px; position: relative; animation: boothFloat 6s ease-in-out infinite alternate; }
 .booth:nth-child(2n) { animation-duration: 7.2s; }

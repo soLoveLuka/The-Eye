@@ -4,20 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
-  <meta name="description" content="The Eye is an artist-forward temporary screen-sharing space: private rooms, studio booths, TV routing, and conversation held in the void." />
-  <title>The Eye</title>
+  <meta name="description" content="IAMLIVE is an artist-forward social callscape: temporary studios, floating booths, pulses, TV routing, and expressive presence in the void." />
+  <title>IAMLIVE</title>
   <link rel="preload" href="assets/eye-loop.mp4" as="video" type="video/mp4" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="eye-shell" id="eyeShell" data-mode="gate">
-    <h1 class="sr-only">The Eye</h1>
+    <h1 class="sr-only">IAMLIVE</h1>
 
     <section class="auth-shell" id="authShell" aria-label="Account authentication">
       <div class="auth-veil">
         <p class="eyebrow">Access</p>
         <canvas class="tesseract-canvas" id="hypercubeCanvas" width="360" height="360" aria-hidden="true"></canvas>
-        <p class="auth-rules">Enter invite code to access The Eye.</p>
+        <p class="auth-rules">Enter invite code to access IAMLIVE.</p>
         <label>Invite code<input id="authInviteCode" type="text" autocomplete="off" maxlength="32" placeholder="enter invite code" /></label>
         <div class="auth-actions">
           <button class="button" id="authEnter" type="button">Enter</button>
@@ -26,7 +26,7 @@
       </div>
     </section>
 
-    <section class="gate" aria-label="The Eye entry gate">
+    <section class="gate" aria-label="IAMLIVE entry gate">
       <div class="scene-bend" aria-hidden="true">
         <div class="video-stage">
           <video class="eye-video" id="eyeVideo" autoplay muted loop playsinline preload="auto">
@@ -147,6 +147,16 @@
             <label><input id="agcToggle" type="checkbox" checked /> Auto gain</label>
           </div>
           <p id="audioStatus" class="audio-status">Awaiting microphone permission.</p>
+        </section>
+
+        <section class="pulse-panel" aria-label="Live pulse feed">
+          <label>Drop a pulse
+            <input id="pulseInput" type="text" maxlength="160" placeholder="say something alive..." />
+          </label>
+          <div class="pulse-actions">
+            <button class="button button--ghost" id="pulseSend" type="button">Send pulse</button>
+          </div>
+          <div id="pulseFeed" class="pulse-feed" aria-live="polite"></div>
         </section>
       </aside>
 

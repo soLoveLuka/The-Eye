@@ -166,6 +166,16 @@ wss.on('connection', (ws) => {
       return broadcastRoomState(session.roomCode);
     }
 
+    if (msg.type === 'pulse') {
+      const p = room.participants.get(session.userId);
+      if (!p) return;
+      const text = safeText(msg.text, 160);
+      if (!text) return;
+      const payload = { type: 'pulse', fromUserId: session.userId, fromName: p.name, text };
+      for (const member of room.participants.values()) send(member.ws, payload);
+      return;
+    }
+
     if (msg.type === 'webrtc_signal') {
       const toUserId = String(msg.toUserId || '');
       const to = room.participants.get(toUserId);
@@ -321,4 +331,4 @@ function clampNum(v, min, max, fb = min) { const n = Number(v); return Number.is
 function makeInviteCode() { return Math.random().toString(36).slice(2, 8).toUpperCase(); }
 function cryptoRandomId() { return `u_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`; }
 
-server.listen(PORT, () => console.log(`The Eye server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`IAMLIVE server running on http://localhost:${PORT}`));
