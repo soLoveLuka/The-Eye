@@ -31,6 +31,7 @@ const MIME = {
 
 const rooms = new Map();
 const sockets = new Map();
+const captchas = new Map();
 
 const server = http.createServer(async (req, res) => {
   if ((req.url || '').startsWith('/api/')) return handleApi(req, res);
@@ -50,59 +51,48 @@ const server = http.createServer(async (req, res) => {
 
 async function handleApi(req, res) {
   try {
+    if (req.method === 'GET' && req.url === '/api/captcha') {
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      const captchaId = crypto.randomBytes(8).toString('hex');
+      captchas.set(captchaId, { answer: String(a + b), expiresAt: Date.now() + 5 * 60 * 1000 });
+      return json(res, 200, { ok: true, captchaId, prompt: `Prove you are human: ${a} + ${b} = ?` });
+    }
+
     if (req.method === 'POST' && req.url === '/api/signup') {
       const body = await readJson(req);
-      const email = String(body.email || '').trim().toLowerCase();
+      const username = String(body.username || '').trim();
       const password = String(body.password || '');
-      const name = String(body.name || '').trim().slice(0, 24) || 'User';
-      if (!/^\S+@\S+\.\S+$/.test(email)) return json(res, 400, { ok: false, error: 'Invalid email.' });
+      if (!/^[a-zA-Z0-9_\-]{3,24}$/.test(username)) return json(res, 400, { ok: false, error: 'Username must be 3-24 letters/numbers/_/-.' });
       if (password.length < 8) return json(res, 400, { ok: false, error: 'Password must be 8+ chars.' });
+      if (!consumeCaptcha(body.captchaId, body.captchaAnswer)) return json(res, 400, { ok: false, error: 'Captcha failed.' });
 
       const db = readUsers();
-      if (db.users.find((u) => decryptText(u.emailEnc) === email)) return json(res, 409, { ok: false, error: 'Email already exists.' });
+      if (db.users.find((u) => decryptText(u.usernameEnc) === username.toLowerCase())) return json(res, 409, { ok: false, error: 'Username already exists.' });
 
-      const verifyCode = Math.random().toString(36).slice(2, 8).toUpperCase();
       const { salt, hash } = hashPassword(password);
       db.users.push({
         id: `usr_${crypto.randomBytes(5).toString('hex')}`,
-        emailEnc: encryptText(email),
-        nameEnc: encryptText(name),
+        usernameEnc: encryptText(username.toLowerCase()),
         passSalt: salt,
         passHash: hash,
-        verified: false,
-        verifyCodeHash: sha256(verifyCode),
-        profileEnc: encryptText(JSON.stringify({ name, bio: '', glyph: '◈', color: '#7f70ff' }))
+        profileEnc: encryptText(JSON.stringify({ name: username, bio: '', glyph: '◈', color: '#7f70ff' }))
       });
       writeUsers(db);
-      fs.appendFileSync(OUTBOX_FILE, `${new Date().toISOString()} VERIFY ${email} CODE ${verifyCode}\n`);
-      return json(res, 200, { ok: true, message: 'Verification code sent.', devCode: verifyCode });
-    }
-
-    if (req.method === 'POST' && req.url === '/api/verify') {
-      const body = await readJson(req);
-      const email = String(body.email || '').trim().toLowerCase();
-      const code = String(body.code || '').trim().toUpperCase();
-      const db = readUsers();
-      const user = db.users.find((u) => decryptText(u.emailEnc) === email);
-      if (!user) return json(res, 404, { ok: false, error: 'User not found.' });
-      if (user.verifyCodeHash !== sha256(code)) return json(res, 400, { ok: false, error: 'Verification code invalid.' });
-      user.verified = true;
-      user.verifyCodeHash = null;
-      writeUsers(db);
-      return json(res, 200, { ok: true });
+      return json(res, 200, { ok: true, message: 'Signup complete.' });
     }
 
     if (req.method === 'POST' && req.url === '/api/login') {
       const body = await readJson(req);
-      const email = String(body.email || '').trim().toLowerCase();
+      const username = String(body.username || '').trim().toLowerCase();
       const password = String(body.password || '');
+      if (!consumeCaptcha(body.captchaId, body.captchaAnswer)) return json(res, 400, { ok: false, error: 'Captcha failed.' });
       const db = readUsers();
-      const user = db.users.find((u) => decryptText(u.emailEnc) === email);
+      const user = db.users.find((u) => decryptText(u.usernameEnc) === username);
       if (!user) return json(res, 404, { ok: false, error: 'User not found.' });
-      if (!user.verified) return json(res, 403, { ok: false, error: 'Verify your email first.' });
       if (!verifyPassword(password, user.passSalt, user.passHash)) return json(res, 401, { ok: false, error: 'Invalid credentials.' });
 
-      const token = signToken({ uid: user.id, email });
+      const token = signToken({ uid: user.id, username });
       const profile = JSON.parse(decryptText(user.profileEnc));
       return json(res, 200, { ok: true, token, profile });
     }
@@ -114,7 +104,7 @@ async function handleApi(req, res) {
       const db = readUsers();
       const user = db.users.find((u) => u.id === session.uid);
       if (!user) return json(res, 404, { ok: false, error: 'User missing.' });
-      return json(res, 200, { ok: true, profile: JSON.parse(decryptText(user.profileEnc)), email: decryptText(user.emailEnc) });
+      return json(res, 200, { ok: true, profile: JSON.parse(decryptText(user.profileEnc)), username: decryptText(user.usernameEnc) });
     }
 
     return json(res, 404, { ok: false, error: 'Not found.' });
@@ -344,6 +334,16 @@ async function readJson(req) {
 function json(res, code, payload) {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
+}
+
+function consumeCaptcha(captchaId, answerRaw) {
+  const id = String(captchaId || '');
+  const answer = String(answerRaw || '').trim();
+  const entry = captchas.get(id);
+  if (!entry) return false;
+  captchas.delete(id);
+  if (Date.now() > entry.expiresAt) return false;
+  return answer === entry.answer;
 }
 
 function send(ws, payload) { if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(payload)); }

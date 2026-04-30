@@ -8,13 +8,13 @@
   const typedWord = document.getElementById("typedWord");
   const whisper = document.getElementById("whisper");
   const authShell = document.getElementById("authShell");
-  const authEmail = document.getElementById("authEmail");
+  const authUsername = document.getElementById("authUsername");
   const authPassword = document.getElementById("authPassword");
-  const authName = document.getElementById("authName");
-  const authCode = document.getElementById("authCode");
+  const authCaptchaPrompt = document.getElementById("authCaptchaPrompt");
+  const authCaptchaAnswer = document.getElementById("authCaptchaAnswer");
   const authSignup = document.getElementById("authSignup");
-  const authVerify = document.getElementById("authVerify");
   const authLogin = document.getElementById("authLogin");
+  const authCaptchaRefresh = document.getElementById("authCaptchaRefresh");
   const authStatus = document.getElementById("authStatus");
 
   const voidRoom = document.getElementById("voidRoom");
@@ -80,6 +80,7 @@
     roomCode: "",
     authToken: "",
     authProfile: null,
+    captchaId: "",
     ws: null,
     wsConnected: false,
     clientId: null,
@@ -132,8 +133,8 @@
 
   function bindAuth() {
     authSignup.addEventListener("click", signup);
-    authVerify.addEventListener("click", verifyEmail);
     authLogin.addEventListener("click", login);
+    authCaptchaRefresh.addEventListener("click", loadCaptcha);
   }
 
   function setAuthStatus(text) {
@@ -146,32 +147,49 @@
       if (token) {
         state.authToken = token;
         authShell.hidden = true;
+      } else {
+        loadCaptcha();
       }
     } catch {
       // ignore storage errors
+      loadCaptcha();
     }
   }
 
-  async function signup() {
-    const body = { email: authEmail.value.trim(), password: authPassword.value, name: authName.value.trim() };
-    const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  async function loadCaptcha() {
+    const res = await fetch("/api/captcha");
     const data = await res.json();
-    setAuthStatus(data.ok ? `Signup ok. Verify code sent.${data.devCode ? ` DEV:${data.devCode}` : ""}` : (data.error || "Signup failed."));
+    if (!data.ok) return;
+    state.captchaId = data.captchaId;
+    authCaptchaPrompt.textContent = data.prompt;
+    authCaptchaAnswer.value = "";
   }
 
-  async function verifyEmail() {
-    const body = { email: authEmail.value.trim(), code: authCode.value.trim() };
-    const res = await fetch("/api/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  async function signup() {
+    const body = {
+      username: authUsername.value.trim(),
+      password: authPassword.value,
+      captchaId: state.captchaId,
+      captchaAnswer: authCaptchaAnswer.value.trim()
+    };
+    const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
-    setAuthStatus(data.ok ? "Email verified. Log in now." : (data.error || "Verify failed."));
+    setAuthStatus(data.ok ? "Signup complete. You can log in." : (data.error || "Signup failed."));
+    if (!data.ok) loadCaptcha();
   }
 
   async function login() {
-    const body = { email: authEmail.value.trim(), password: authPassword.value };
+    const body = {
+      username: authUsername.value.trim(),
+      password: authPassword.value,
+      captchaId: state.captchaId,
+      captchaAnswer: authCaptchaAnswer.value.trim()
+    };
     const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!data.ok) {
       setAuthStatus(data.error || "Login failed.");
+      loadCaptcha();
       return;
     }
     state.authToken = data.token;

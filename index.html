@@ -14,17 +14,17 @@
     <h1 class="sr-only">The Eye</h1>
 
     <section class="auth-shell" id="authShell" aria-label="Account authentication">
-      <div class="auth-card">
-        <p class="eyebrow">Account Access</p>
+      <div class="auth-veil">
+        <p class="eyebrow">Access</p>
         <h2>Enter The Eye</h2>
-        <label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@email.com" /></label>
+        <label>Username<input id="authUsername" type="text" autocomplete="username" maxlength="24" placeholder="chosen name" /></label>
         <label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••" /></label>
-        <label>Name (for signup)<input id="authName" type="text" maxlength="24" placeholder="Display name" /></label>
-        <label>Verification code<input id="authCode" type="text" maxlength="12" placeholder="Only for verify step" /></label>
+        <p id="authCaptchaPrompt" class="auth-captcha">Loading challenge…</p>
+        <label>Captcha answer<input id="authCaptchaAnswer" type="text" maxlength="16" placeholder="answer" /></label>
         <div class="auth-actions">
           <button class="button" id="authSignup" type="button">Sign up</button>
-          <button class="button button--ghost" id="authVerify" type="button">Verify email</button>
           <button class="button button--ghost" id="authLogin" type="button">Log in</button>
+          <button class="button button--ghost" id="authCaptchaRefresh" type="button">New captcha</button>
         </div>
         <p id="authStatus" class="audio-status">Sign up or log in to continue.</p>
       </div>
