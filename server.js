@@ -51,12 +51,19 @@ const server = http.createServer(async (req, res) => {
 
 async function handleApi(req, res) {
   try {
-    if (req.method === 'GET' && req.url === '/api/captcha') {
+    if (req.method === 'GET' && (req.url || '').startsWith('/api/captcha')) {
       const a = Math.floor(Math.random() * 9) + 1;
       const b = Math.floor(Math.random() * 9) + 1;
       const captchaId = crypto.randomBytes(8).toString('hex');
       captchas.set(captchaId, { answer: String(a + b), expiresAt: Date.now() + 5 * 60 * 1000 });
-      return json(res, 200, { ok: true, captchaId, prompt: `Prove you are human: ${a} + ${b} = ?` });
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0'
+      });
+      res.end(JSON.stringify({ ok: true, captchaId, prompt: `Prove you are human: ${a} + ${b} = ?` }));
+      return;
     }
 
     if (req.method === 'POST' && req.url === '/api/signup') {

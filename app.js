@@ -135,6 +135,12 @@
     authSignup.addEventListener("click", signup);
     authLogin.addEventListener("click", login);
     authCaptchaRefresh.addEventListener("click", loadCaptcha);
+    window.addEventListener("online", () => {
+      if (!authShell.hidden) loadCaptcha();
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && !authShell.hidden && !state.captchaId) loadCaptcha();
+    });
   }
 
   function setAuthStatus(text) {
@@ -156,16 +162,38 @@
     }
   }
 
-  async function loadCaptcha() {
-    const res = await fetch("/api/captcha");
-    const data = await res.json();
-    if (!data.ok) return;
-    state.captchaId = data.captchaId;
-    authCaptchaPrompt.textContent = data.prompt;
-    authCaptchaAnswer.value = "";
+  function setAuthBusy(busy) {
+    authSignup.disabled = busy;
+    authLogin.disabled = busy;
+    authCaptchaRefresh.disabled = busy;
+  }
+
+  async function loadCaptcha(retries = 3) {
+    setAuthBusy(true);
+    state.captchaId = "";
+    authCaptchaPrompt.textContent = "Loading challenge…";
+    for (let i = 0; i < retries; i += 1) {
+      try {
+        const res = await fetch(`/api/captcha?t=${Date.now()}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data?.ok && data.captchaId && data.prompt) {
+          state.captchaId = data.captchaId;
+          authCaptchaPrompt.textContent = data.prompt;
+          authCaptchaAnswer.value = "";
+          setAuthStatus("Ready.");
+          setAuthBusy(false);
+          return;
+        }
+      } catch {}
+      await new Promise((resolve) => setTimeout(resolve, 180 * (i + 1)));
+    }
+    authCaptchaPrompt.textContent = "Challenge unavailable. Tap New captcha.";
+    setAuthStatus("Captcha failed to load. Retry.");
+    setAuthBusy(false);
   }
 
   async function signup() {
+    if (!state.captchaId) return loadCaptcha();
     const body = {
       username: authUsername.value.trim(),
       password: authPassword.value,
@@ -179,6 +207,7 @@
   }
 
   async function login() {
+    if (!state.captchaId) return loadCaptcha();
     const body = {
       username: authUsername.value.trim(),
       password: authPassword.value,
