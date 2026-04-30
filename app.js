@@ -54,6 +54,8 @@
   const regenInvite = document.getElementById("regenInvite");
   const accessInviteHint = document.getElementById("accessInviteHint");
   const SIGNAL_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
+  const DEMO_MASTER_CODE = "FM0NPMO3SV9OS50";
+  const LOCAL_INVITES_KEY = "the-eye-local-invites-v1";
 
   const ROOM_SIZES = ["studio", "loft", "warehouse", "cathedral"];
 
@@ -77,6 +79,7 @@
     roomCode: "",
     authToken: "",
     isMasterAccess: false,
+    accessMode: "server",
     iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
     peerConnections: {},
     remoteStreams: {},
@@ -217,20 +220,58 @@
     let data;
     try {
       const res = await fetch("/api/access/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      if (!res.ok) throw new Error("access login unavailable");
       data = await res.json();
+      if (!data.ok) throw new Error(data.error || "invalid");
     } catch {
-      setAuthStatus("Invite code check failed.");
-      return;
+      return loginWithLocalInvite(code);
     }
-    if (!data.ok) return setAuthStatus(data.error || "Invite code invalid.");
     state.authToken = data.token || "";
     state.isMasterAccess = !!data.isMaster;
+    state.accessMode = "server";
     try {
       localStorage.setItem("the-eye-auth-token", state.authToken);
       localStorage.setItem("the-eye-master-access", state.isMasterAccess ? "1" : "0");
     } catch {}
     accessInviteHint.hidden = !state.isMasterAccess;
     enterEyeHome(state.isMasterAccess ? "Master access granted." : "Access granted.");
+  }
+
+  function loginWithLocalInvite(code) {
+    const invites = readLocalInvites();
+    const isMaster = code === DEMO_MASTER_CODE;
+    const isInvite = invites.includes(code);
+    if (!isMaster && !isInvite) {
+      setAuthStatus("Invite code invalid.");
+      return;
+    }
+    state.authToken = `local-${isMaster ? "master" : "invitee"}-${Date.now()}`;
+    state.isMasterAccess = isMaster;
+    state.accessMode = "local";
+    try {
+      localStorage.setItem("the-eye-auth-token", state.authToken);
+      localStorage.setItem("the-eye-master-access", state.isMasterAccess ? "1" : "0");
+    } catch {}
+    accessInviteHint.hidden = !state.isMasterAccess;
+    enterEyeHome(isMaster ? "Master access granted (local mode)." : "Access granted (local mode).");
+  }
+
+  function readLocalInvites() {
+    try {
+      const raw = localStorage.getItem(LOCAL_INVITES_KEY);
+      const arr = JSON.parse(raw || "[]");
+      return Array.isArray(arr) ? arr.map((v) => String(v || "").toUpperCase()) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeLocalInvites(invites) {
+    try {
+      localStorage.setItem(LOCAL_INVITES_KEY, JSON.stringify(invites));
+    } catch {
+      // ignore storage errors
+    }
   }
 
   function enterEyeHome(statusText) {
@@ -766,6 +807,15 @@
       setAudioStatus("Only master invite can generate site access codes.");
       return;
     }
+    if (state.accessMode === "local") {
+      const code = makeLocalAccessCode();
+      const invites = readLocalInvites();
+      invites.push(code);
+      writeLocalInvites(invites.slice(-200));
+      inviteCode.value = code;
+      setAudioStatus("New local access invite generated.");
+      return;
+    }
     fetch("/api/access/invite/create", {
       method: "POST",
       headers: {
@@ -784,6 +834,10 @@
         setAudioStatus("New site access invite generated.");
       })
       .catch(() => setAudioStatus("Invite generation failed."));
+  }
+
+  function makeLocalAccessCode() {
+    return Math.random().toString(36).replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 12);
   }
 
   function loadProfile() {
