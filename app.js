@@ -150,8 +150,10 @@
       const res = await fetch("/api/health", { cache: "no-store" });
       const data = await res.json();
       if (!data?.ok) setAuthStatus("Auth backend unavailable.");
+      else if (!state.authToken) setAuthStatus("Backend online. Sign up or log in.");
     } catch {
       setAuthStatus("Cannot reach auth server. Start/restart backend.");
+      setTimeout(checkAuthBackend, 2000);
     }
   }
 
