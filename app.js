@@ -8,6 +8,7 @@
   const typedWord = document.getElementById("typedWord");
   const whisper = document.getElementById("whisper");
   const authShell = document.getElementById("authShell");
+  const hypercubeCanvas = document.getElementById("hypercubeCanvas");
   const authUsername = document.getElementById("authUsername");
   const authPassword = document.getElementById("authPassword");
   const authShowPassword = document.getElementById("authShowPassword");
@@ -78,6 +79,20 @@
     roomCode: "",
     authToken: "",
     authProfile: null,
+    hypercube: {
+      dragging: false,
+      lastX: 0,
+      lastY: 0,
+      ax: 0.7,
+      ay: 0.4,
+      az: 0,
+      axy: 0.2,
+      axz: 0.4,
+      axw: 0.3,
+      ayz: 0.1,
+      ayw: 0.4,
+      azw: 0.2
+    },
     ws: null,
     wsConnected: false,
     clientId: null,
@@ -125,6 +140,7 @@
     refreshDeviceMenus().catch(() => {});
     bindAuth();
     restoreAuth();
+    initHypercube();
     tickMic();
   }
 
@@ -134,6 +150,23 @@
     authShowPassword.addEventListener("change", () => {
       authPassword.type = authShowPassword.checked ? "text" : "password";
     });
+
+    hypercubeCanvas?.addEventListener("pointerdown", (e) => {
+      state.hypercube.dragging = true;
+      state.hypercube.lastX = e.clientX;
+      state.hypercube.lastY = e.clientY;
+      hypercubeCanvas.setPointerCapture(e.pointerId);
+    });
+    hypercubeCanvas?.addEventListener("pointermove", (e) => {
+      if (!state.hypercube.dragging) return;
+      const dx = e.clientX - state.hypercube.lastX;
+      const dy = e.clientY - state.hypercube.lastY;
+      state.hypercube.lastX = e.clientX;
+      state.hypercube.lastY = e.clientY;
+      state.hypercube.ay += dx * 0.006;
+      state.hypercube.ax += dy * 0.006;
+    });
+    hypercubeCanvas?.addEventListener("pointerup", () => { state.hypercube.dragging = false; });
   }
 
   function setAuthStatus(text) {
@@ -830,6 +863,16 @@
   }
 
   function onKeyDown(event) {
+    if (!authShell.hidden) {
+      const s = 0.08;
+      const k = event.key.toLowerCase();
+      if (k === "q") state.hypercube.axw += s;
+      if (k === "a") state.hypercube.axw -= s;
+      if (k === "w") state.hypercube.ayw += s;
+      if (k === "s") state.hypercube.ayw -= s;
+      if (k === "e") state.hypercube.azw += s;
+      if (k === "d") state.hypercube.azw -= s;
+    }
     if (event.key === "Escape" && state.mode === "room") {
       if (state.contextOpen) {
         toggleContextMenu(false);
@@ -997,6 +1040,92 @@
     window.scrollTo(0, 0);
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+  }
+
+  function initHypercube() {
+    if (!hypercubeCanvas) return;
+    const ctx = hypercubeCanvas.getContext("2d");
+    if (!ctx) return;
+    const resize = () => {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const rect = hypercubeCanvas.getBoundingClientRect();
+      hypercubeCanvas.width = Math.max(240, Math.floor(rect.width * dpr));
+      hypercubeCanvas.height = Math.max(240, Math.floor(rect.height * dpr));
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    const points = [];
+    for (let i = 0; i < 16; i += 1) {
+      points.push([(i & 1) ? 1 : -1, (i & 2) ? 1 : -1, (i & 4) ? 1 : -1, (i & 8) ? 1 : -1]);
+    }
+    const edges = [];
+    for (let i = 0; i < 16; i += 1) {
+      for (let b = 0; b < 4; b += 1) {
+        const j = i ^ (1 << b);
+        if (i < j) edges.push([i, j]);
+      }
+    }
+
+    const rotate2 = (a, b, t) => {
+      const c = Math.cos(t), s = Math.sin(t);
+      return [a * c - b * s, a * s + b * c];
+    };
+
+    const frame = () => {
+      const w = hypercubeCanvas.clientWidth;
+      const h = hypercubeCanvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      const p2 = points.map((p) => {
+        let [x, y, z, ww] = p;
+        [x, y] = rotate2(x, y, state.hypercube.axy);
+        [x, z] = rotate2(x, z, state.hypercube.axz);
+        [x, ww] = rotate2(x, ww, state.hypercube.axw);
+        [y, z] = rotate2(y, z, state.hypercube.ayz);
+        [y, ww] = rotate2(y, ww, state.hypercube.ayw);
+        [z, ww] = rotate2(z, ww, state.hypercube.azw);
+
+        const wDist = 3.4;
+        const wf = 1 / (wDist - ww);
+        x *= wf; y *= wf; z *= wf;
+
+        [y, z] = rotate2(y, z, state.hypercube.ax);
+        [x, z] = rotate2(x, z, state.hypercube.ay);
+        [x, y] = rotate2(x, y, state.hypercube.az);
+
+        const zDist = 3.2;
+        const zf = 1 / (zDist - z);
+        const sx = x * zf * 142 + w * 0.5;
+        const sy = y * zf * 142 + h * 0.5;
+        return { sx, sy, zf, wf };
+      });
+
+      ctx.lineWidth = 1.15;
+      for (const [a, b] of edges) {
+        const pa = p2[a], pb = p2[b];
+        const glow = Math.max(0.2, Math.min(1, (pa.zf + pb.zf) * 0.5));
+        ctx.strokeStyle = `rgba(228,222,255,${0.25 + glow * 0.6})`;
+        ctx.beginPath();
+        ctx.moveTo(pa.sx, pa.sy);
+        ctx.lineTo(pb.sx, pb.sy);
+        ctx.stroke();
+      }
+
+      for (const p of p2) {
+        const r = 1.6 + Math.min(3.6, p.wf * 2.8);
+        ctx.fillStyle = "rgba(244,201,93,.95)";
+        ctx.beginPath();
+        ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      state.hypercube.axy += 0.006;
+      state.hypercube.ayz += 0.004;
+      state.hypercube.azw += 0.005;
+      requestAnimationFrame(frame);
+    };
+    frame();
   }
 
   function normalizeCode(value) {
