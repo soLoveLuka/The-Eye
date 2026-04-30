@@ -20,26 +20,17 @@ const MIME = {
   '.svg': 'image/svg+xml'
 };
 
-const rooms = new Map(); // roomCode -> { participants: Map<userId, participant>, desiredHeads, desiredBooths, theme }
-const sockets = new Map(); // ws -> { userId, roomCode }
+const rooms = new Map();
+const sockets = new Map();
 
 const server = http.createServer((req, res) => {
   const rawUrl = req.url === '/' ? '/index.html' : req.url || '/index.html';
   const safePath = path.normalize(rawUrl).replace(/^\.+/, '');
   const filePath = path.join(__dirname, safePath);
-
-  if (!filePath.startsWith(__dirname)) {
-    res.writeHead(403);
-    res.end('Forbidden');
-    return;
-  }
+  if (!filePath.startsWith(__dirname)) return void res.writeHead(403).end('Forbidden');
 
   fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('Not found');
-      return;
-    }
+    if (err) return void res.writeHead(404).end('Not found');
     const ext = path.extname(filePath).toLowerCase();
     res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
     res.end(data);
@@ -47,15 +38,9 @@ const server = http.createServer((req, res) => {
 });
 
 const wss = new WebSocketServer({ noServer: true });
-
 server.on('upgrade', (req, socket, head) => {
-  if (req.url !== '/ws') {
-    socket.destroy();
-    return;
-  }
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    wss.emit('connection', ws, req);
-  });
+  if (req.url !== '/ws') return void socket.destroy();
+  wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws));
 });
 
 wss.on('connection', (ws) => {
@@ -67,25 +52,19 @@ wss.on('connection', (ws) => {
     let msg;
     try { msg = JSON.parse(String(raw)); } catch { return; }
 
-    if (msg.type === 'create_or_join_room' || msg.type === 'join_room') {
-      const roomCode = sanitizeRoomCode(msg.roomCode);
-      if (!roomCode) {
-        send(ws, { type: 'error', message: 'Invalid room code.' });
-        return;
-      }
-      joinRoom(ws, roomCode, msg);
-      return;
+    if (msg.type === 'create_room') {
+      return createRoom(ws, sanitizeRoomCode(msg.roomCode), msg);
     }
-
+    if (msg.type === 'join_room_invite') {
+      return joinRoom(ws, sanitizeRoomCode(msg.roomCode), sanitizeInvite(msg.inviteCode), msg);
+    }
     if (msg.type === 'leave_room') {
-      leaveRoom(ws);
-      return;
+      return leaveRoom(ws);
     }
 
     const session = sockets.get(ws);
-    if (!session?.roomCode) return;
-    const room = rooms.get(session.roomCode);
-    if (!room) return;
+    const room = session?.roomCode ? rooms.get(session.roomCode) : null;
+    if (!session || !room) return;
 
     if (msg.type === 'profile_update') {
       const p = room.participants.get(session.userId);
@@ -95,33 +74,40 @@ wss.on('connection', (ws) => {
       p.bio = safeText(profile.bio, 280);
       p.glyph = safeText(profile.glyph, 2) || p.glyph;
       p.color = safeColor(profile.color) || p.color;
-      broadcastRoomState(session.roomCode);
-      return;
+      return broadcastRoomState(session.roomCode);
     }
 
     if (msg.type === 'level') {
       const p = room.participants.get(session.userId);
       if (!p) return;
       p.level = clampNum(msg.level, 0, 100);
-      broadcastRoomState(session.roomCode);
-      return;
+      return broadcastRoomState(session.roomCode);
     }
 
     if (msg.type === 'mute_participant') {
       const target = room.participants.get(String(msg.targetUserId || ''));
-      if (target) {
-        target.muted = Boolean(msg.muted);
-        broadcastRoomState(session.roomCode);
-      }
-      return;
+      if (!target) return;
+      target.muted = Boolean(msg.muted);
+      return broadcastRoomState(session.roomCode);
+    }
+
+    if (msg.type === 'curtain') {
+      const p = room.participants.get(session.userId);
+      if (!p) return;
+      p.curtained = Boolean(msg.curtained);
+      return broadcastRoomState(session.roomCode);
+    }
+
+    if (msg.type === 'regen_invite') {
+      room.inviteCode = makeInviteCode();
+      return broadcastRoomState(session.roomCode);
     }
 
     if (msg.type === 'tv_route') {
       const p = room.participants.get(session.userId);
       if (!p) return;
       p.route = ['none', '1', '2'].includes(msg.route) ? msg.route : 'none';
-      broadcastRoomState(session.roomCode);
-      return;
+      return broadcastRoomState(session.roomCode);
     }
   });
 
@@ -131,25 +117,42 @@ wss.on('connection', (ws) => {
   });
 });
 
-function joinRoom(ws, roomCode, msg) {
+function createRoom(ws, roomCode, msg) {
+  if (!roomCode || roomCode.length < 3) return send(ws, { type: 'error', message: 'Invalid room code.' });
   leaveRoom(ws);
-  let room = rooms.get(roomCode);
-  if (!room) {
-    room = {
-      code: roomCode,
-      desiredHeads: clampNum(msg.desiredHeads, 2, 40, 8),
-      desiredBooths: clampNum(msg.desiredBooths, 2, 20, 8),
-      theme: msg.theme || {},
-      participants: new Map()
-    };
-    rooms.set(roomCode, room);
-  }
+  if (rooms.has(roomCode)) return send(ws, { type: 'error', message: 'Room already exists. Use JOIN.' });
 
+  const room = {
+    code: roomCode,
+    desiredHeads: clampNum(msg.desiredHeads, 1, 20, 8),
+    desiredBooths: clampNum(msg.desiredBooths, 1, 20, 8),
+    inviteCode: makeInviteCode(),
+    theme: msg.theme || {},
+    participants: new Map()
+  };
+  rooms.set(roomCode, room);
+  addParticipant(ws, roomCode, msg.profile || {});
+  broadcastRoomState(roomCode);
+}
+
+function joinRoom(ws, roomCode, inviteCode, msg) {
+  if (!roomCode || !inviteCode) return send(ws, { type: 'error', message: 'Passcode + invite required.' });
+  leaveRoom(ws);
+  const room = rooms.get(roomCode);
+  if (!room) return send(ws, { type: 'error', message: 'Room not found.' });
+  if (room.inviteCode !== inviteCode) return send(ws, { type: 'error', message: 'Invite mismatch.' });
+  if (room.participants.size >= room.desiredHeads) return send(ws, { type: 'error', message: 'Room full.' });
+
+  addParticipant(ws, roomCode, msg.profile || {});
+  broadcastRoomState(roomCode);
+}
+
+function addParticipant(ws, roomCode, profile) {
+  const room = rooms.get(roomCode);
   const session = sockets.get(ws);
-  if (!session) return;
+  if (!room || !session) return;
   session.roomCode = roomCode;
 
-  const profile = msg.profile || {};
   room.participants.set(session.userId, {
     userId: session.userId,
     name: safeText(profile.name, 24) || `User ${room.participants.size + 1}`,
@@ -158,11 +161,10 @@ function joinRoom(ws, roomCode, msg) {
     color: safeColor(profile.color) || '#7f70ff',
     level: 0,
     muted: false,
+    curtained: false,
     route: 'none',
     ws
   });
-
-  broadcastRoomState(roomCode);
 }
 
 function leaveRoom(ws) {
@@ -173,9 +175,11 @@ function leaveRoom(ws) {
     session.roomCode = null;
     return;
   }
+
   room.participants.delete(session.userId);
   const code = session.roomCode;
   session.roomCode = null;
+
   if (room.participants.size === 0) {
     rooms.delete(code);
     return;
@@ -186,6 +190,7 @@ function leaveRoom(ws) {
 function broadcastRoomState(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
+
   const participants = [...room.participants.values()].map((p) => ({
     userId: p.userId,
     name: p.name,
@@ -194,21 +199,21 @@ function broadcastRoomState(roomCode) {
     color: p.color,
     level: p.level,
     muted: p.muted,
+    curtained: p.curtained,
     route: p.route
   }));
 
   const payload = {
     type: 'room_state',
     roomCode,
+    inviteCode: room.inviteCode,
     desiredHeads: room.desiredHeads,
     desiredBooths: room.desiredBooths,
     theme: room.theme,
     participants
   };
 
-  for (const p of room.participants.values()) {
-    send(p.ws, payload);
-  }
+  for (const p of room.participants.values()) send(p.ws, payload);
 }
 
 function send(ws, payload) {
@@ -218,22 +223,24 @@ function send(ws, payload) {
 function sanitizeRoomCode(value) {
   return String(value || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 18);
 }
-
+function sanitizeInvite(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+}
 function safeText(value, maxLen) {
   return String(value || '').trim().slice(0, maxLen);
 }
-
 function safeColor(value) {
   const v = String(value || '').trim();
   return /^#[0-9a-fA-F]{6}$/.test(v) ? v : null;
 }
-
 function clampNum(value, min, max, fallback = min) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
 }
-
+function makeInviteCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
 function cryptoRandomId() {
   return `u_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
 }

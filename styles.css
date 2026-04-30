@@ -3,6 +3,7 @@
   --bone: rgba(244, 239, 226, 0.92);
   --bone-soft: rgba(244, 239, 226, 0.56);
   --booth-hue: 252;
+  --room-accent: 127, 112, 255;
   --mx: 0;
   --my: 0;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -52,7 +53,7 @@ input, select { width: 100%; color: var(--bone); background: rgba(244,239,226,.0
 
 .void { z-index: 40; opacity: 0; pointer-events: none; transition: opacity 1s var(--ease); background: #000; }
 .eye-shell[data-mode="room"] .void { opacity: 1; pointer-events: auto; }
-.void__background { position: absolute; inset: -20%; background: radial-gradient(circle at 50% 50%, rgba(43,34,88,.72), #000 56%); filter: blur(20px); }
+.void__background { position: absolute; inset: -20%; background: radial-gradient(circle at 50% 50%, rgba(var(--room-accent), .42), #000 56%); filter: blur(20px); }
 .void__stars { position: absolute; inset: 0; opacity: .45; background-image: radial-gradient(circle, rgba(244,239,226,.65) 0 1px, transparent 1px); background-size: 97px 89px; mask-image: radial-gradient(circle, #000 0 58%, transparent 82%); }
 
 .booth-panel, .room-hud { position: fixed; width: min(360px, 32vw); border: 1px solid rgba(244,239,226,.12); border-radius: 24px; background: rgba(0,0,0,.48); backdrop-filter: blur(20px); padding: 18px; }
@@ -64,6 +65,7 @@ input, select { width: 100%; color: var(--bone); background: rgba(244,239,226,.0
 kbd { padding: 1px 5px; border: 1px solid rgba(244,239,226,.28); border-radius: 5px; font-size: .6rem; background: rgba(255,255,255,.04); }
 .profile-menu { margin-top: 10px; display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid rgba(244,239,226,.12); }
 .profile-menu textarea { width: 100%; resize: vertical; min-height: 74px; color: var(--bone); background: rgba(244,239,226,.06); border: 1px solid rgba(244,239,226,.14); border-radius: 12px; padding: 10px 12px; }
+.invite-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .mic-menu { margin-top: 14px; display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(244,239,226,.12); }
 .mic-dock { margin-top: 10px; min-height: 40px; border: 1px solid rgba(244,239,226,.2); border-radius: 999px; background: rgba(10,10,18,.66); color: var(--bone); letter-spacing: .14em; text-transform: uppercase; font-size: .66rem; }
 .mic-dock.is-open { border-color: rgba(244,201,93,.58); box-shadow: 0 0 18px rgba(244,201,93,.18); }
@@ -76,6 +78,8 @@ kbd { padding: 1px 5px; border: 1px solid rgba(244,239,226,.28); border-radius: 
 .booth:nth-child(3n) { animation-duration: 8.1s; }
 .booth.active { box-shadow: 0 0 0 1px rgba(244,201,93,.5), 0 0 28px rgba(118,70,255,.25); }
 .booth.muted { background: rgba(120,120,120,.15) !important; border-color: rgba(160,160,160,.35); }
+.booth.curtained { background: rgba(20,20,26,.86) !important; border-color: rgba(120,120,140,.34); }
+.booth.curtained .booth__meta { opacity: .35; }
 .booth__orb { width: 42px; height: 42px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.5), hsla(var(--booth-hue),85%,58%,.78) 45%, hsla(calc(var(--booth-hue) + 58),84%,36%,.85) 100%); box-shadow: 0 0 22px hsla(var(--booth-hue),92%,68%,.36); display: grid; place-items: center; font-size: .9rem; }
 .booth__orb::after { content: ""; position: absolute; width: 52px; height: 52px; border-radius: 50%; border: 1px solid rgba(255,255,255,.12); transform: scale(1.1); opacity: .4; pointer-events: none; }
 .booth__meta { display: grid; gap: 4px; min-width: 0; }
@@ -86,6 +90,10 @@ kbd { padding: 1px 5px; border: 1px solid rgba(244,239,226,.28); border-radius: 
 @keyframes boothFloat { from { transform: translateY(0px); } to { transform: translateY(-5px); } }
 .overflow { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(244,239,226,.12); color: var(--bone-soft); font-size: .75rem; }
 .tv-quick { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+
+.profile-page { position: fixed; inset: 0; z-index: 95; background: radial-gradient(circle at 20% 10%, rgba(95,32,145,.28), rgba(0,0,0,.92) 45%), rgba(0,0,0,.88); backdrop-filter: blur(18px); display: grid; place-items: center; padding: 24px; }
+.profile-page__inner { width: min(760px, 96vw); border: 1px solid rgba(244,239,226,.16); border-radius: 28px; background: rgba(9,9,16,.74); padding: clamp(18px, 4vw, 42px); box-shadow: 0 30px 120px rgba(0,0,0,.65); }
+.profile-page__actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
 
 .screen-wall { position: fixed; left: min(420px, 36vw); right: min(420px, 36vw); top: 50%; transform: translateY(-50%); display: grid; grid-template-columns: 1fr; gap: 18px; }
 .tv { border: 1px solid rgba(244,239,226,.14); border-radius: 20px; background: rgba(0,0,0,.55); overflow: hidden; position: relative; min-height: 220px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 20px 80px rgba(0,0,0,.5); }

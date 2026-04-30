@@ -74,14 +74,6 @@
         <p class="eyebrow" id="roomCodeLabel">Room</p>
         <h2 id="roomTitle">The Studio</h2>
         <p id="roomScaleLabel">Studio</p>
-        <button class="button button--ghost" id="profileToggle" type="button" aria-expanded="false">Avatar + Bio</button>
-        <section class="profile-menu" id="profileMenu" hidden aria-label="Avatar profile settings">
-          <label>Display name<input id="profileName" type="text" maxlength="24" placeholder="Your name" /></label>
-          <label>Avatar color<input id="profileColor" type="color" value="#7f70ff" /></label>
-          <label>Avatar glyph<input id="profileGlyph" type="text" maxlength="2" placeholder="◈" /></label>
-          <label>Bio<textarea id="profileBio" rows="3" maxlength="280" placeholder="A short bio"></textarea></label>
-          <button class="button button--ghost" id="profileSave" type="button">Save profile</button>
-        </section>
         <div class="booths" id="booths"></div>
         <div class="overflow" id="overflowAvatars" hidden></div>
         <p class="panel-hint">Tip: Click a sphere to focus that booth. Press <kbd>M</kbd> to mute, <kbd>V</kbd> to open mic controls.</p>
@@ -110,9 +102,18 @@
 
         <div class="hud-actions">
           <button class="button button--ghost" id="micToggle" type="button">Mic: On</button>
+          <button class="button button--ghost" id="curtainToggle" type="button">Close curtains</button>
+          <button class="button button--ghost" id="avatarPageToggle" type="button">Avatars</button>
           <button class="button button--ghost" id="shareScreen" type="button">Share screen + audio</button>
           <button class="button button--ghost" id="leaveRoom" type="button">Leave</button>
         </div>
+
+        <label>Invite code
+          <div class="invite-row">
+            <input id="inviteCode" type="text" readonly value="------" />
+            <button class="button button--ghost" id="regenInvite" type="button">New</button>
+          </div>
+        </label>
 
         <button class="mic-dock" id="micMenuToggle" type="button" aria-expanded="false" aria-label="Toggle microphone menu">🎙 Mic</button>
 
@@ -134,6 +135,21 @@
           <p id="audioStatus" class="audio-status">Awaiting microphone permission.</p>
         </section>
       </aside>
+
+      <section class="profile-page" id="profilePage" hidden aria-label="Avatar studio">
+        <div class="profile-page__inner">
+          <p class="eyebrow">Avatar Studio</p>
+          <h2>Shape your signal</h2>
+          <label>Display name<input id="profileName" type="text" maxlength="24" placeholder="Your name" /></label>
+          <label>Avatar color<input id="profileColor" type="color" value="#7f70ff" /></label>
+          <label>Avatar glyph<input id="profileGlyph" type="text" maxlength="2" placeholder="◈" /></label>
+          <label>Bio<textarea id="profileBio" rows="4" maxlength="280" placeholder="A short bio"></textarea></label>
+          <div class="profile-page__actions">
+            <button class="button button--ghost" id="profileClose" type="button">Close</button>
+            <button class="button" id="profileSave" type="button">Save profile</button>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 

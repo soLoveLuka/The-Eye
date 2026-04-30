@@ -12,8 +12,9 @@
   const roomTitle = document.getElementById("roomTitle");
   const roomScaleLabel = document.getElementById("roomScaleLabel");
   const roomCodeLabel = document.getElementById("roomCodeLabel");
-  const profileToggle = document.getElementById("profileToggle");
-  const profileMenu = document.getElementById("profileMenu");
+  const avatarPageToggle = document.getElementById("avatarPageToggle");
+  const profilePage = document.getElementById("profilePage");
+  const profileClose = document.getElementById("profileClose");
   const profileName = document.getElementById("profileName");
   const profileColor = document.getElementById("profileColor");
   const profileGlyph = document.getElementById("profileGlyph");
@@ -29,6 +30,7 @@
   const tv2 = document.getElementById("tv2");
   const shareScreen = document.getElementById("shareScreen");
   const micToggle = document.getElementById("micToggle");
+  const curtainToggle = document.getElementById("curtainToggle");
   const micMenuToggle = document.getElementById("micMenuToggle");
   const micMenu = document.getElementById("micMenu");
   const micInputDevice = document.getElementById("micInputDevice");
@@ -43,15 +45,22 @@
   const leaveRoom = document.getElementById("leaveRoom");
   const contextDock = document.getElementById("contextDock");
   const roomHud = document.getElementById("roomHud");
+  const inviteCode = document.getElementById("inviteCode");
+  const regenInvite = document.getElementById("regenInvite");
   const SIGNAL_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
 
   const ROOM_SIZES = ["studio", "loft", "warehouse", "cathedral"];
 
-  const QUESTIONS = [
-    { key: "passcode", prompt: "WHAT'S THE PASSCODE?", type: "text", normalize: (v) => normalizeCode(v) || generateRoomWord() },
-    { key: "heads", prompt: "HOW MANY HEADS?", type: "number", min: 2, max: 40, normalize: (v) => clampInt(v, 2, 40, 8) },
-    { key: "booths", prompt: "BOOTH COUNT?", type: "number", min: 2, max: 20, normalize: (v) => clampInt(v, 2, 20, 8) },
-    { key: "colors", prompt: "COLORS?", type: "text", normalize: (v) => String(v || "VIOLET").trim().toUpperCase().slice(0, 24) }
+  const CREATE_QUESTIONS = [
+    { key: "passcode", prompt: "WHAT'S THE PASSCODE?", type: "text", normalize: (v) => normalizeCode(v), validate: (v) => v.length >= 3, hint: "3-18 chars (A-Z, 0-9, -)" },
+    { key: "heads", prompt: "HOW MANY HEADS? (1-20)", type: "number", min: 1, max: 20, normalize: (v) => clampInt(v, 1, 20, 8), validate: (v) => v >= 1 && v <= 20, hint: "Enter a number from 1 to 20" },
+    { key: "booths", prompt: "BOOTH COUNT? (1-20)", type: "number", min: 1, max: 20, normalize: (v) => clampInt(v, 1, 20, 8), validate: (v, answers) => v >= 1 && v <= 20 && v <= clampInt(answers.heads, 1, 20, 20), hint: "Must be <= head count" },
+    { key: "color", prompt: "ROOM COLOR? (HTML HEX, e.g. #7F70FF)", type: "text", normalize: (v) => String(v || "").trim().toUpperCase(), validate: (v) => /^#[0-9A-F]{6}$/.test(v), hint: "Use full hex like #1A2B3C" }
+  ];
+
+  const JOIN_QUESTIONS = [
+    { key: "passcode", prompt: "SERVER PASSCODE?", type: "text", normalize: (v) => normalizeCode(v), validate: (v) => v.length >= 3, hint: "Ask host for passcode" },
+    { key: "invite", prompt: "INVITE CODE?", type: "text", normalize: (v) => String(v || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10), validate: (v) => v.length >= 6, hint: "Ask host for invite code" }
   ];
 
   const state = {
@@ -73,7 +82,7 @@
     devicesReady: false,
     micMenuOpen: false,
     contextOpen: false,
-    profileMenuOpen: false,
+    profilePageOpen: false,
     profile: {
       name: "You",
       color: "#7f70ff",
@@ -86,6 +95,7 @@
     fallTimer: null,
     interview: {
       active: false,
+      mode: null,
       step: 0,
       answers: {},
       typing: ""
@@ -139,8 +149,11 @@
     agcToggle.addEventListener("change", reconfigureMicStream);
     leaveRoom.addEventListener("click", leaveRoomNow);
     contextDock.addEventListener("click", toggleContextMenu);
-    profileToggle.addEventListener("click", toggleProfileMenu);
+    avatarPageToggle.addEventListener("click", toggleProfilePage);
+    profileClose.addEventListener("click", () => toggleProfilePage(false));
     profileSave.addEventListener("click", saveProfileFromForm);
+    curtainToggle.addEventListener("click", toggleCurtains);
+    regenInvite.addEventListener("click", regenInviteCode);
 
     if (navigator.mediaDevices?.addEventListener) {
       navigator.mediaDevices.addEventListener("devicechange", refreshDeviceMenus);
@@ -166,9 +179,6 @@
       state.ws.addEventListener("open", () => {
         state.wsConnected = true;
         setAudioStatus("Online room sync connected.");
-        if (state.roomCode) {
-          sendSocket({ type: "join_room", roomCode: state.roomCode, profile: state.profile });
-        }
       });
       state.ws.addEventListener("close", () => {
         state.wsConnected = false;
@@ -209,6 +219,8 @@
   function applyServerRoomState(msg) {
     if (!Array.isArray(msg.participants)) return;
     state.participantCount = msg.participants.length;
+    if (msg.inviteCode) inviteCode.value = msg.inviteCode;
+    if (msg.theme?.roomColor) applyColorTheme(msg.theme.roomColor);
     const localBooths = msg.participants.slice(0, 20).map((p, i) => ({
       id: i + 1,
       userId: p.userId,
@@ -218,6 +230,7 @@
       color: p.color || "",
       level: Number(p.level || 0),
       muted: !!p.muted,
+      curtained: !!p.curtained,
       element: null,
       meter: null
     }));
@@ -236,27 +249,34 @@
     }
 
     const code = normalizeCode(input.value);
-    if (code !== "CREATE") {
-      triggerFall();
-      setWhisper("TYPE CREATE TO START A ROOM");
+    if (code === "CREATE") {
+      beginInterview("create");
       return;
     }
-
-    beginInterview();
+    if (code === "JOIN") {
+      beginInterview("join");
+      return;
+    }
+    {
+      triggerFall();
+      setWhisper("TYPE CREATE OR JOIN");
+    }
   }
 
-  function beginInterview() {
+  function beginInterview(mode) {
     state.interview.active = true;
+    state.interview.mode = mode;
     state.interview.step = 0;
     state.interview.answers = {};
     state.interview.typing = "";
     input.value = "";
     renderQuestionFrame(false);
-    setWhisper("ANSWER. PRESS ENTER.");
+    setWhisper(mode === "join" ? "JOIN FLOW. ANSWER + ENTER." : "CREATE FLOW. ANSWER + ENTER.");
   }
 
   function renderQuestionFrame(withFall = false) {
-    const q = QUESTIONS[state.interview.step];
+    const list = state.interview.mode === "join" ? JOIN_QUESTIONS : CREATE_QUESTIONS;
+    const q = list[state.interview.step];
     if (!q) return;
 
     const answerPreview = state.interview.typing ? `\n${state.interview.typing}` : "";
@@ -268,13 +288,14 @@
   }
 
   function submitInterviewAnswer() {
-    const q = QUESTIONS[state.interview.step];
+    const list = state.interview.mode === "join" ? JOIN_QUESTIONS : CREATE_QUESTIONS;
+    const q = list[state.interview.step];
     if (!q) return;
 
     const raw = state.interview.typing;
     const value = q.normalize(raw);
-    if (q.type === "number" && (value < q.min || value > q.max)) {
-      setWhisper(`ENTER ${q.min}-${q.max}`);
+    if (!q.validate(value, state.interview.answers)) {
+      setWhisper(q.hint || "Invalid answer.");
       return;
     }
 
@@ -285,10 +306,11 @@
 
     triggerFall();
 
-    if (state.interview.step >= QUESTIONS.length) {
+    if (state.interview.step >= list.length) {
       setTimeout(() => {
         state.interview.active = false;
-        createRoomFromAnswers();
+        if (state.interview.mode === "join") joinRoomFromAnswers();
+        else createRoomFromAnswers();
       }, 380);
       return;
     }
@@ -298,22 +320,24 @@
 
   function createRoomFromAnswers() {
     const passcode = state.interview.answers.passcode;
-    const heads = state.interview.answers.heads;
-    const boothCount = Math.min(state.interview.answers.booths, 20, heads);
-    const colors = state.interview.answers.colors;
+    const heads = clampInt(state.interview.answers.heads, 1, 20, 8);
+    const boothCount = Math.min(clampInt(state.interview.answers.booths, 1, 20, 8), heads);
+    const roomColor = state.interview.answers.color;
     state.roomCode = passcode;
 
-    state.booths = Array.from({ length: boothCount }, (_, i) => ({
-      id: i + 1,
-      name: i === 0 ? state.profile.name : `Booth ${i + 1}`,
-      bio: i === 0 ? state.profile.bio : "",
-      glyph: i === 0 ? state.profile.glyph : "◉",
-      color: i === 0 ? state.profile.color : "",
+    state.booths = [{
+      id: 1,
+      userId: state.clientId || "local",
+      name: state.profile.name,
+      bio: state.profile.bio,
+      glyph: state.profile.glyph,
+      color: state.profile.color,
       level: 0,
       muted: false,
+      curtained: false,
       element: null,
       meter: null
-    }));
+    }];
     state.activeBoothId = 1;
 
     renderBooths(heads);
@@ -324,15 +348,15 @@
     roomCodeLabel.textContent = "Created room";
     roomScaleLabel.textContent = ROOM_SIZES[Math.min(ROOM_SIZES.length - 1, Math.floor(boothCount / 6))];
 
-    applyColorTheme(colors);
+    applyColorTheme(roomColor);
     connectSocket();
     sendSocket({
-      type: "create_or_join_room",
+      type: "create_room",
       roomCode: passcode,
       desiredHeads: heads,
       desiredBooths: boothCount,
       profile: state.profile,
-      theme: { colors }
+      theme: { roomColor }
     });
     ensureMicInput();
     applyTvRouting();
@@ -342,16 +366,30 @@
     input.value = "";
   }
 
-  function applyColorTheme(colors) {
-    const palette = colors.toUpperCase();
-    let hue = 252;
-    if (palette.includes("RED")) hue = 350;
-    else if (palette.includes("BLUE")) hue = 220;
-    else if (palette.includes("GREEN")) hue = 140;
-    else if (palette.includes("GOLD")) hue = 44;
-    else if (palette.includes("PINK")) hue = 320;
+  function joinRoomFromAnswers() {
+    const passcode = state.interview.answers.passcode;
+    const invite = state.interview.answers.invite;
+    state.roomCode = passcode;
+    setMode("room");
+    voidRoom.setAttribute("aria-hidden", "false");
+    roomTitle.textContent = passcode;
+    roomCodeLabel.textContent = "Joined room";
+    connectSocket();
+    sendSocket({ type: "join_room_invite", roomCode: passcode, inviteCode: invite, profile: state.profile });
+    ensureMicInput();
+    applyTvRouting();
+    applyOthersVolume();
+    toggleContextMenu(false);
+    setWhisper("");
+    input.value = "";
+  }
 
+  function applyColorTheme(colors) {
+    const hex = String(colors || "#7F70FF").toUpperCase();
+    const rgb = hexToRgb(hex) || { r: 127, g: 112, b: 255 };
+    const hue = rgbToHue(rgb.r, rgb.g, rgb.b);
     shell.style.setProperty("--booth-hue", String(hue));
+    shell.style.setProperty("--room-accent", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
   }
 
   function renderBooths(totalParticipants) {
@@ -360,11 +398,14 @@
       const el = document.createElement("article");
       el.className = "booth" + (booth.id === state.activeBoothId ? " active" : "");
       el.dataset.id = String(booth.id);
+      const name = booth.curtained ? "Curtained Booth" : booth.name;
+      const bio = booth.curtained ? "Hidden behind velvet." : (booth.bio || "No bio yet.");
+      const glyph = booth.curtained ? "◌" : (booth.glyph || "◉");
       el.innerHTML = `
-        <div class="booth__orb" style="${booth.color ? `background:${booth.color};box-shadow:0 0 24px ${booth.color}88;` : ""}">${booth.glyph || "◉"}</div>
+        <div class="booth__orb" style="${booth.color ? `background:${booth.color};box-shadow:0 0 24px ${booth.color}88;` : ""}">${glyph}</div>
         <div class="booth__meta">
-          <div class="booth__head"><span>${booth.name}</span><button type="button" class="button button--ghost boothMute">Mute</button></div>
-          <p class="booth__bio">${booth.bio || "No bio yet."}</p>
+          <div class="booth__head"><span>${name}</span><button type="button" class="button button--ghost boothMute">Mute</button></div>
+          <p class="booth__bio">${bio}</p>
           <div class="meter"><i></i></div>
         </div>
       `;
@@ -399,12 +440,16 @@
   function syncBoothUi(booth) {
     if (!booth.element) return;
     booth.element.classList.toggle("muted", booth.muted);
+    booth.element.classList.toggle("curtained", !!booth.curtained);
     const orb = booth.element.querySelector(".booth__orb");
     if (booth.muted) {
       booth.element.style.background = "rgba(120,120,120,.22)";
       booth.element.style.boxShadow = "none";
       if (orb) orb.style.filter = "grayscale(1) saturate(.2)";
       if (booth.meter) booth.meter.style.width = "0%";
+    } else if (booth.curtained) {
+      if (booth.meter) booth.meter.style.width = "0%";
+      if (orb) orb.style.filter = "grayscale(.5) brightness(.7)";
     } else if (orb) {
       orb.style.filter = "none";
     }
@@ -414,6 +459,8 @@
 
   function refreshActiveBooth() {
     state.booths.forEach((booth) => booth.element?.classList.toggle("active", booth.id === state.activeBoothId));
+    const active = state.booths.find((b) => b.id === state.activeBoothId);
+    if (active) curtainToggle.textContent = active.curtained ? "Open curtains" : "Close curtains";
   }
 
   async function ensureMicInput() {
@@ -467,10 +514,24 @@
     contextDock.classList.toggle("is-open", state.contextOpen);
   }
 
-  function toggleProfileMenu() {
-    state.profileMenuOpen = !state.profileMenuOpen;
-    profileMenu.hidden = !state.profileMenuOpen;
-    profileToggle.setAttribute("aria-expanded", String(state.profileMenuOpen));
+  function toggleProfilePage(force) {
+    state.profilePageOpen = typeof force === "boolean" ? force : !state.profilePageOpen;
+    profilePage.hidden = !state.profilePageOpen;
+    avatarPageToggle.setAttribute("aria-expanded", String(state.profilePageOpen));
+    if (state.profilePageOpen) toggleContextMenu(false);
+  }
+
+  function toggleCurtains() {
+    const active = state.booths.find((b) => b.id === state.activeBoothId);
+    if (!active) return;
+    active.curtained = !active.curtained;
+    syncBoothUi(active);
+    sendSocket({ type: "curtain", roomCode: state.roomCode, curtained: active.curtained });
+    curtainToggle.textContent = active.curtained ? "Open curtains" : "Close curtains";
+  }
+
+  function regenInviteCode() {
+    sendSocket({ type: "regen_invite", roomCode: state.roomCode });
   }
 
   function loadProfile() {
@@ -887,5 +948,31 @@
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  function hexToRgb(hex) {
+    const m = String(hex || "").match(/^#([0-9A-Fa-f]{6})$/);
+    if (!m) return null;
+    const raw = m[1];
+    return {
+      r: parseInt(raw.slice(0, 2), 16),
+      g: parseInt(raw.slice(2, 4), 16),
+      b: parseInt(raw.slice(4, 6), 16)
+    };
+  }
+
+  function rgbToHue(r, g, b) {
+    const rn = r / 255;
+    const gn = g / 255;
+    const bn = b / 255;
+    const max = Math.max(rn, gn, bn);
+    const min = Math.min(rn, gn, bn);
+    const d = max - min;
+    if (d === 0) return 252;
+    let h;
+    if (max === rn) h = ((gn - bn) / d) % 6;
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    return Math.round(h * 60 < 0 ? h * 60 + 360 : h * 60);
   }
 })();
