@@ -21,17 +21,9 @@ button { cursor: pointer; }
   display: block;
   width: min(360px, 84vw);
   height: min(360px, 84vw);
-  margin: 2px auto 14px;
+  margin: 2px auto 2px;
   transform: translateZ(48px);
   filter: drop-shadow(0 0 14px rgba(126,73,255,.38));
-}
-.tesseract-hint {
-  margin: 0 0 12px;
-  text-align: center;
-  color: rgba(244,239,226,.62);
-  font-size: .62rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
 }
 .auth-veil label { text-transform: uppercase; letter-spacing: .18em; }
 .auth-veil input { border: 0; border-bottom: 1px solid rgba(244,239,226,.28); border-radius: 0; background: transparent; padding: 10px 0; color: rgba(255,249,236,.98); caret-color: rgba(244,201,93,.96); letter-spacing: .06em; text-shadow: 0 0 12px rgba(140,82,255,.25); transition: border-color .12s linear, transform .12s linear, text-shadow .12s linear; }
