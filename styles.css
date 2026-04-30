@@ -42,6 +42,29 @@ button { cursor: pointer; }
 .auth-veil .eyebrow, .auth-status, #authStatus, .auth-veil label { text-align: center; }
 .auth-inline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; width: 100%; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(244,239,226,.72); }
 .auth-inline input { width: auto; border: 0; padding: 0; accent-color: rgba(244,201,93,.95); }
+.auth-actions .button,
+.auth-actions .button--ghost {
+  border: 0;
+  background: transparent;
+  color: rgba(255,247,231,.94);
+  padding: 4px 6px;
+  min-height: 30px;
+  letter-spacing: .24em;
+  text-shadow: 0 0 12px rgba(126,73,255,.36), 0 0 20px rgba(244,201,93,.22);
+  transform-style: preserve-3d;
+  animation: authGlyphFloat 3.2s var(--ease) infinite;
+}
+.auth-actions .button:nth-child(2) { animation-duration: 4.1s; animation-delay: -0.9s; }
+.auth-actions .button:nth-child(3) { animation-duration: 3.7s; animation-delay: -1.6s; }
+.auth-actions .button:hover { filter: brightness(1.18); }
+
+@keyframes authGlyphFloat {
+  0% { transform: rotateX(0deg) translateY(0); }
+  25% { transform: rotateX(22deg) translateY(-1px); }
+  50% { transform: rotateX(-16deg) translateY(1px); }
+  75% { transform: rotateX(12deg) translateY(-1px); }
+  100% { transform: rotateX(0deg) translateY(0); }
+}
 .eye-shell, .gate, .creator, .void { position: fixed; inset: 0; }
 .gate { z-index: 1; overflow: hidden; transition: opacity 1s var(--ease), transform 1.5s var(--ease), filter 1.2s var(--ease); }
 .eye-shell[data-mode="creator"] .gate, .eye-shell[data-mode="room"] .gate { opacity: 0; pointer-events: none; transform: scale(1.4); filter: blur(16px) brightness(0.28); }
