@@ -13,6 +13,23 @@
   <main class="eye-shell" id="eyeShell" data-mode="gate">
     <h1 class="sr-only">The Eye</h1>
 
+    <section class="auth-shell" id="authShell" aria-label="Account authentication">
+      <div class="auth-card">
+        <p class="eyebrow">Account Access</p>
+        <h2>Enter The Eye</h2>
+        <label>Email<input id="authEmail" type="email" autocomplete="email" placeholder="you@email.com" /></label>
+        <label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••" /></label>
+        <label>Name (for signup)<input id="authName" type="text" maxlength="24" placeholder="Display name" /></label>
+        <label>Verification code<input id="authCode" type="text" maxlength="12" placeholder="Only for verify step" /></label>
+        <div class="auth-actions">
+          <button class="button" id="authSignup" type="button">Sign up</button>
+          <button class="button button--ghost" id="authVerify" type="button">Verify email</button>
+          <button class="button button--ghost" id="authLogin" type="button">Log in</button>
+        </div>
+        <p id="authStatus" class="audio-status">Sign up or log in to continue.</p>
+      </div>
+    </section>
+
     <section class="gate" aria-label="The Eye entry gate">
       <div class="scene-bend" aria-hidden="true">
         <div class="video-stage">

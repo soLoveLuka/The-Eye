@@ -7,6 +7,15 @@
   const input = document.getElementById("portalInput");
   const typedWord = document.getElementById("typedWord");
   const whisper = document.getElementById("whisper");
+  const authShell = document.getElementById("authShell");
+  const authEmail = document.getElementById("authEmail");
+  const authPassword = document.getElementById("authPassword");
+  const authName = document.getElementById("authName");
+  const authCode = document.getElementById("authCode");
+  const authSignup = document.getElementById("authSignup");
+  const authVerify = document.getElementById("authVerify");
+  const authLogin = document.getElementById("authLogin");
+  const authStatus = document.getElementById("authStatus");
 
   const voidRoom = document.getElementById("voidRoom");
   const roomTitle = document.getElementById("roomTitle");
@@ -69,6 +78,8 @@
     activeBoothId: 1,
     micMuted: false,
     roomCode: "",
+    authToken: "",
+    authProfile: null,
     ws: null,
     wsConnected: false,
     clientId: null,
@@ -114,7 +125,65 @@
     renderLetters("");
     focusInputSoon();
     refreshDeviceMenus().catch(() => {});
+    bindAuth();
+    restoreAuth();
     tickMic();
+  }
+
+  function bindAuth() {
+    authSignup.addEventListener("click", signup);
+    authVerify.addEventListener("click", verifyEmail);
+    authLogin.addEventListener("click", login);
+  }
+
+  function setAuthStatus(text) {
+    if (authStatus) authStatus.textContent = text;
+  }
+
+  function restoreAuth() {
+    try {
+      const token = localStorage.getItem("the-eye-auth-token") || "";
+      if (token) {
+        state.authToken = token;
+        authShell.hidden = true;
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  async function signup() {
+    const body = { email: authEmail.value.trim(), password: authPassword.value, name: authName.value.trim() };
+    const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json();
+    setAuthStatus(data.ok ? `Signup ok. Verify code sent.${data.devCode ? ` DEV:${data.devCode}` : ""}` : (data.error || "Signup failed."));
+  }
+
+  async function verifyEmail() {
+    const body = { email: authEmail.value.trim(), code: authCode.value.trim() };
+    const res = await fetch("/api/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json();
+    setAuthStatus(data.ok ? "Email verified. Log in now." : (data.error || "Verify failed."));
+  }
+
+  async function login() {
+    const body = { email: authEmail.value.trim(), password: authPassword.value };
+    const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!data.ok) {
+      setAuthStatus(data.error || "Login failed.");
+      return;
+    }
+    state.authToken = data.token;
+    state.authProfile = data.profile || null;
+    if (state.authProfile?.name) state.profile.name = state.authProfile.name;
+    if (state.authProfile?.bio) state.profile.bio = state.authProfile.bio;
+    if (state.authProfile?.glyph) state.profile.glyph = state.authProfile.glyph;
+    if (state.authProfile?.color) state.profile.color = state.authProfile.color;
+    try { localStorage.setItem("the-eye-auth-token", state.authToken); } catch {}
+    syncProfileForm();
+    authShell.hidden = true;
+    setAuthStatus("Logged in.");
   }
 
   function bindEvents() {
@@ -242,6 +311,12 @@
 
   function onGateSubmit(event) {
     event.preventDefault();
+
+    if (!state.authToken) {
+      authShell.hidden = false;
+      setWhisper("LOG IN TO CREATE OR JOIN");
+      return;
+    }
 
     if (state.interview.active) {
       submitInterviewAnswer();
