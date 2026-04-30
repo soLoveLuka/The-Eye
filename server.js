@@ -9,11 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 8787);
 const AUTH_SECRET = process.env.AUTH_SECRET || 'dev-change-me-eye-secret';
+const MASTER_ACCESS_CODE = 'FM0NPMO3SV9OS50';
 const DATA_DIR = path.join(__dirname, 'data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const ACCESS_FILE = path.join(DATA_DIR, 'access-invites.json');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify({ users: [] }, null, 2));
+if (!fs.existsSync(ACCESS_FILE)) fs.writeFileSync(ACCESS_FILE, JSON.stringify({ invites: [] }, null, 2));
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -49,55 +50,35 @@ const server = http.createServer(async (req, res) => {
 async function handleApi(req, res) {
   try {
     if (req.method === 'GET' && req.url === '/api/health') {
-      return json(res, 200, { ok: true, auth: true, storage: fs.existsSync(USERS_FILE) });
+      return json(res, 200, { ok: true, auth: true, storage: fs.existsSync(ACCESS_FILE) });
     }
 
-    if (req.method === 'POST' && req.url === '/api/signup') {
+    if (req.method === 'POST' && req.url === '/api/access/login') {
       const body = await readJson(req);
-      const username = String(body.username || '').trim();
-      const password = String(body.password || '');
-      if (!/^[^\s]{3,24}$/.test(username)) return json(res, 400, { ok: false, error: 'Username must be 3-24 chars, no spaces.' });
-      if (password.length < 8) return json(res, 400, { ok: false, error: 'Password must be 8+ chars.' });
+      const code = String(body.code || '').trim().toUpperCase();
+      if (!code) return json(res, 400, { ok: false, error: 'Invite code required.' });
 
-      const db = readUsers();
-      if (db.users.find((u) => decryptText(u.usernameEnc) === username.toLowerCase())) return json(res, 409, { ok: false, error: 'Username already exists.' });
+      if (code === MASTER_ACCESS_CODE) {
+        const token = signToken({ role: 'master', code });
+        return json(res, 200, { ok: true, token, isMaster: true });
+      }
 
-      const { salt, hash } = hashPassword(password);
-      db.users.push({
-        id: `usr_${crypto.randomBytes(5).toString('hex')}`,
-        usernameEnc: encryptText(username.toLowerCase()),
-        passSalt: salt,
-        passHash: hash,
-        profileEnc: encryptText(JSON.stringify({ name: username, bio: '', glyph: '◈', color: '#7f70ff' }))
-      });
-      writeUsers(db);
-      const created = db.users[db.users.length - 1];
-      const token = signToken({ uid: created.id, username: username.toLowerCase() });
-      return json(res, 200, { ok: true, message: 'Signup complete.', token, profile: { name: username, bio: '', glyph: '◈', color: '#7f70ff' } });
+      const db = readAccessInvites();
+      const invite = db.invites.find((i) => i.code === code && i.active !== false);
+      if (!invite) return json(res, 401, { ok: false, error: 'Invalid invite code.' });
+      const token = signToken({ role: 'invitee', code });
+      return json(res, 200, { ok: true, token, isMaster: false });
     }
 
-    if (req.method === 'POST' && req.url === '/api/login') {
-      const body = await readJson(req);
-      const username = String(body.username || '').trim().toLowerCase();
-      const password = String(body.password || '');
-      const db = readUsers();
-      const user = db.users.find((u) => decryptText(u.usernameEnc) === username);
-      if (!user) return json(res, 404, { ok: false, error: 'User not found.' });
-      if (!verifyPassword(password, user.passSalt, user.passHash)) return json(res, 401, { ok: false, error: 'Invalid credentials.' });
-
-      const token = signToken({ uid: user.id, username });
-      const profile = JSON.parse(decryptText(user.profileEnc));
-      return json(res, 200, { ok: true, token, profile });
-    }
-
-    if (req.method === 'GET' && req.url === '/api/me') {
+    if (req.method === 'POST' && req.url === '/api/access/invite/create') {
       const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
       const session = verifyToken(token);
-      if (!session) return json(res, 401, { ok: false, error: 'Unauthorized.' });
-      const db = readUsers();
-      const user = db.users.find((u) => u.id === session.uid);
-      if (!user) return json(res, 404, { ok: false, error: 'User missing.' });
-      return json(res, 200, { ok: true, profile: JSON.parse(decryptText(user.profileEnc)), username: decryptText(user.usernameEnc) });
+      if (!session || session.role !== 'master') return json(res, 403, { ok: false, error: 'Master access required.' });
+      const db = readAccessInvites();
+      const code = makeAccessCode();
+      db.invites.push({ code, active: true, createdAt: new Date().toISOString() });
+      writeAccessInvites(db);
+      return json(res, 200, { ok: true, code });
     }
 
     return json(res, 404, { ok: false, error: 'Not found.' });
@@ -269,40 +250,14 @@ function broadcastRoomState(roomCode) {
   for (const p of room.participants.values()) send(p.ws, payload);
 }
 
-function readUsers() {
-  return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+function readAccessInvites() {
+  return JSON.parse(fs.readFileSync(ACCESS_FILE, 'utf8'));
 }
-function writeUsers(data) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+function writeAccessInvites(data) {
+  fs.writeFileSync(ACCESS_FILE, JSON.stringify(data, null, 2));
 }
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-  return { salt, hash };
-}
-function verifyPassword(password, salt, hash) {
-  const h = crypto.scryptSync(password, salt, 64).toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(h, 'hex'), Buffer.from(hash, 'hex'));
-}
-function sha256(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
-
-function encryptText(plain) {
-  const iv = crypto.randomBytes(12);
-  const key = crypto.createHash('sha256').update(AUTH_SECRET).digest();
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const enc = Buffer.concat([cipher.update(String(plain), 'utf8'), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return `${iv.toString('hex')}:${tag.toString('hex')}:${enc.toString('hex')}`;
-}
-function decryptText(payload) {
-  const [ivHex, tagHex, dataHex] = String(payload || '').split(':');
-  const iv = Buffer.from(ivHex, 'hex');
-  const tag = Buffer.from(tagHex, 'hex');
-  const data = Buffer.from(dataHex, 'hex');
-  const key = crypto.createHash('sha256').update(AUTH_SECRET).digest();
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+function makeAccessCode() {
+  return crypto.randomBytes(9).toString('base64').replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 15);
 }
 
 function signToken(payload) {

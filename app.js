@@ -9,11 +9,8 @@
   const whisper = document.getElementById("whisper");
   const authShell = document.getElementById("authShell");
   const hypercubeCanvas = document.getElementById("hypercubeCanvas");
-  const authUsername = document.getElementById("authUsername");
-  const authPassword = document.getElementById("authPassword");
-  const authShowPassword = document.getElementById("authShowPassword");
-  const authSignup = document.getElementById("authSignup");
-  const authLogin = document.getElementById("authLogin");
+  const authInviteCode = document.getElementById("authInviteCode");
+  const authEnter = document.getElementById("authEnter");
   const authStatus = document.getElementById("authStatus");
 
   const voidRoom = document.getElementById("voidRoom");
@@ -55,6 +52,7 @@
   const roomHud = document.getElementById("roomHud");
   const inviteCode = document.getElementById("inviteCode");
   const regenInvite = document.getElementById("regenInvite");
+  const accessInviteHint = document.getElementById("accessInviteHint");
   const SIGNAL_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
 
   const ROOM_SIZES = ["studio", "loft", "warehouse", "cathedral"];
@@ -78,6 +76,7 @@
     micMuted: false,
     roomCode: "",
     authToken: "",
+    isMasterAccess: false,
     authProfile: null,
     hypercube: {
       dragging: false,
@@ -149,20 +148,16 @@
     try {
       const res = await fetch("/api/health", { cache: "no-store" });
       const data = await res.json();
-      if (!data?.ok) setAuthStatus("Auth backend unavailable.");
-      else if (!state.authToken) setAuthStatus("Backend online. Sign up or log in.");
+      if (!data?.ok) setAuthStatus("Access backend unavailable.");
+      else if (!state.authToken) setAuthStatus("Backend online. Enter invite code.");
     } catch {
-      setAuthStatus("Cannot reach auth server. Start/restart backend.");
+      setAuthStatus("Cannot reach access server. Start/restart backend.");
       setTimeout(checkAuthBackend, 2000);
     }
   }
 
   function bindAuth() {
-    authSignup.addEventListener("click", signup);
-    authLogin.addEventListener("click", login);
-    authShowPassword.addEventListener("change", () => {
-      authPassword.type = authShowPassword.checked ? "text" : "password";
-    });
+    authEnter.addEventListener("click", loginWithInvite);
 
     hypercubeCanvas?.addEventListener("pointerdown", (e) => {
       state.hypercube.dragging = true;
@@ -184,10 +179,9 @@
     const submitFromInput = (event) => {
       if (event.key !== "Enter") return;
       event.preventDefault();
-      login();
+      loginWithInvite();
     };
-    authUsername.addEventListener("keydown", submitFromInput);
-    authPassword.addEventListener("keydown", submitFromInput);
+    authInviteCode.addEventListener("keydown", submitFromInput);
   }
 
   function setAuthStatus(text) {
@@ -197,85 +191,38 @@
   function restoreAuth() {
     try {
       const token = localStorage.getItem("the-eye-auth-token") || "";
+      const master = localStorage.getItem("the-eye-master-access") === "1";
       if (token) {
         state.authToken = token;
+        state.isMasterAccess = master;
         authShell.hidden = true;
+        accessInviteHint.hidden = !state.isMasterAccess;
       }
     } catch {
       // ignore storage errors
     }
   }
 
-  async function signup() {
-    const body = {
-      username: authUsername.value.trim(),
-      password: authPassword.value
-    };
-    if (!body.username || !body.password) {
-      setAuthStatus("Username and password required.");
-      return;
-    }
-    if (body.username.length < 3 || body.username.length > 24 || /\s/.test(body.username)) {
-      setAuthStatus("Username must be 3–24 chars with no spaces.");
-      return;
-    }
-    if (body.password.length < 8) {
-      setAuthStatus("Password must be at least 8 characters.");
-      return;
-    }
+  async function loginWithInvite() {
+    const code = String(authInviteCode.value || "").trim().toUpperCase();
+    if (!code) return setAuthStatus("Invite code required.");
     let data;
     try {
-      const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const res = await fetch("/api/access/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
       data = await res.json();
     } catch {
-      setAuthStatus("Signup failed: backend unreachable.");
+      setAuthStatus("Access failed: backend unreachable.");
       return;
     }
-    if (!data.ok) {
-      setAuthStatus(data.error || "Signup failed.");
-      return;
-    }
+    if (!data.ok) return setAuthStatus(data.error || "Invite code invalid.");
     state.authToken = data.token || "";
-    state.authProfile = data.profile || { name: body.username, bio: "", glyph: "◈", color: "#7f70ff" };
-    if (state.authProfile?.name) state.profile.name = state.authProfile.name;
-    if (state.authProfile?.bio) state.profile.bio = state.authProfile.bio;
-    if (state.authProfile?.glyph) state.profile.glyph = state.authProfile.glyph;
-    if (state.authProfile?.color) state.profile.color = state.authProfile.color;
-    try { localStorage.setItem("the-eye-auth-token", state.authToken); } catch {}
-    syncProfileForm();
-    enterEyeHome("Account created. Entering The Eye…");
-  }
-
-  async function login() {
-    const body = {
-      username: authUsername.value.trim(),
-      password: authPassword.value
-    };
-    if (!body.username || !body.password) {
-      setAuthStatus("Username and password required.");
-      return;
-    }
-    let data;
+    state.isMasterAccess = !!data.isMaster;
     try {
-      const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      data = await res.json();
-    } catch {
-      setAuthStatus("Login failed: backend unreachable.");
-      return;
-    }
-    if (!data.ok) {
-      setAuthStatus(data.error || "Login failed.");
-      return;
-    }
-    state.authToken = data.token;
-    state.authProfile = data.profile || null;
-    if (state.authProfile?.name) state.profile.name = state.authProfile.name;
-    if (state.authProfile?.bio) state.profile.bio = state.authProfile.bio;
-    if (state.authProfile?.glyph) state.profile.glyph = state.authProfile.glyph;
-    if (state.authProfile?.color) state.profile.color = state.authProfile.color;
-    try { localStorage.setItem("the-eye-auth-token", state.authToken); } catch {}
-    syncProfileForm();
-    enterEyeHome("Logged in.");
+      localStorage.setItem("the-eye-auth-token", state.authToken);
+      localStorage.setItem("the-eye-master-access", state.isMasterAccess ? "1" : "0");
+    } catch {}
+    accessInviteHint.hidden = !state.isMasterAccess;
+    enterEyeHome(state.isMasterAccess ? "Master access granted." : "Access granted.");
   }
 
   function enterEyeHome(statusText) {
@@ -284,6 +231,7 @@
     input.value = "";
     renderLetters("");
     focusInputSoon();
+    accessInviteHint.hidden = !state.isMasterAccess;
     setAuthStatus(statusText || "Ready.");
   }
 
@@ -709,7 +657,28 @@
   }
 
   function regenInviteCode() {
-    sendSocket({ type: "regen_invite", roomCode: state.roomCode });
+    if (!state.isMasterAccess) {
+      setAudioStatus("Only master invite can generate site access codes.");
+      return;
+    }
+    fetch("/api/access/invite/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${state.authToken}`
+      },
+      body: "{}"
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) {
+          setAudioStatus(data.error || "Invite generation failed.");
+          return;
+        }
+        inviteCode.value = data.code;
+        setAudioStatus("New site access invite generated.");
+      })
+      .catch(() => setAudioStatus("Invite generation failed."));
   }
 
   function loadProfile() {

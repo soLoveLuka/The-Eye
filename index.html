@@ -17,15 +17,12 @@
       <div class="auth-veil">
         <p class="eyebrow">Access</p>
         <canvas class="tesseract-canvas" id="hypercubeCanvas" width="360" height="360" aria-hidden="true"></canvas>
-        <p class="auth-rules">Username: 3–24 chars, no spaces. Password: 8+ chars.</p>
-        <label>Username<input id="authUsername" type="text" autocomplete="username" maxlength="24" placeholder="chosen name" /></label>
-        <label>Password<input id="authPassword" type="password" autocomplete="current-password" placeholder="••••••••" /></label>
-        <label class="auth-inline"><input id="authShowPassword" type="checkbox" /> Show password while typing</label>
+        <p class="auth-rules">Enter invite code to access The Eye.</p>
+        <label>Invite code<input id="authInviteCode" type="text" autocomplete="off" maxlength="32" placeholder="FM0NPMO3SV9OS50" /></label>
         <div class="auth-actions">
-          <button class="button" id="authSignup" type="button">Sign up</button>
-          <button class="button button--ghost" id="authLogin" type="button">Log in</button>
+          <button class="button" id="authEnter" type="button">Enter</button>
         </div>
-        <p id="authStatus" class="audio-status">Sign up or log in to continue.</p>
+        <p id="authStatus" class="audio-status">Enter your invite code.</p>
       </div>
     </section>
 
@@ -130,6 +127,7 @@
             <button class="button button--ghost" id="regenInvite" type="button">New</button>
           </div>
         </label>
+        <p id="accessInviteHint" class="audio-status" hidden>Only master-code session can generate access invites.</p>
 
         <button class="mic-dock" id="micMenuToggle" type="button" aria-expanded="false" aria-label="Toggle microphone menu">🎙 Mic</button>
 
