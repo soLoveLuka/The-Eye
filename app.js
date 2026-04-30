@@ -208,7 +208,7 @@
       setAuthStatus(data.error || "Signup failed.");
       return;
     }
-    setAuthStatus("Signup complete. Logging you in…");
+    setAuthStatus("Account created. Entering The Eye…");
     await login();
   }
 
@@ -235,8 +235,16 @@
     if (state.authProfile?.color) state.profile.color = state.authProfile.color;
     try { localStorage.setItem("the-eye-auth-token", state.authToken); } catch {}
     syncProfileForm();
+    enterEyeHome("Logged in.");
+  }
+
+  function enterEyeHome(statusText) {
     authShell.hidden = true;
-    setAuthStatus("Logged in.");
+    setMode("gate");
+    input.value = "";
+    renderLetters("");
+    focusInputSoon();
+    setAuthStatus(statusText || "Ready.");
   }
 
   function bindEvents() {
