@@ -208,8 +208,15 @@
       setAuthStatus(data.error || "Signup failed.");
       return;
     }
-    setAuthStatus("Account created. Entering The Eye…");
-    await login();
+    state.authToken = data.token || "";
+    state.authProfile = data.profile || { name: body.username, bio: "", glyph: "◈", color: "#7f70ff" };
+    if (state.authProfile?.name) state.profile.name = state.authProfile.name;
+    if (state.authProfile?.bio) state.profile.bio = state.authProfile.bio;
+    if (state.authProfile?.glyph) state.profile.glyph = state.authProfile.glyph;
+    if (state.authProfile?.color) state.profile.color = state.authProfile.color;
+    try { localStorage.setItem("the-eye-auth-token", state.authToken); } catch {}
+    syncProfileForm();
+    enterEyeHome("Account created. Entering The Eye…");
   }
 
   async function login() {

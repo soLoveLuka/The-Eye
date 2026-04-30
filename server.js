@@ -52,7 +52,7 @@ async function handleApi(req, res) {
       const body = await readJson(req);
       const username = String(body.username || '').trim();
       const password = String(body.password || '');
-      if (!/^[a-zA-Z0-9_\-]{3,24}$/.test(username)) return json(res, 400, { ok: false, error: 'Username must be 3-24 letters/numbers/_/-.' });
+      if (!/^[^\s]{3,24}$/.test(username)) return json(res, 400, { ok: false, error: 'Username must be 3-24 chars, no spaces.' });
       if (password.length < 8) return json(res, 400, { ok: false, error: 'Password must be 8+ chars.' });
 
       const db = readUsers();
@@ -67,7 +67,9 @@ async function handleApi(req, res) {
         profileEnc: encryptText(JSON.stringify({ name: username, bio: '', glyph: '◈', color: '#7f70ff' }))
       });
       writeUsers(db);
-      return json(res, 200, { ok: true, message: 'Signup complete.' });
+      const created = db.users[db.users.length - 1];
+      const token = signToken({ uid: created.id, username: username.toLowerCase() });
+      return json(res, 200, { ok: true, message: 'Signup complete.', token, profile: { name: username, bio: '', glyph: '◈', color: '#7f70ff' } });
     }
 
     if (req.method === 'POST' && req.url === '/api/login') {
