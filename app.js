@@ -145,15 +145,7 @@
   }
 
   async function checkAuthBackend() {
-    try {
-      const res = await fetch("/api/health", { cache: "no-store" });
-      const data = await res.json();
-      if (!data?.ok) setAuthStatus("Access backend unavailable.");
-      else if (!state.authToken) setAuthStatus("Backend online. Enter invite code.");
-    } catch {
-      setAuthStatus("Cannot reach access server. Start/restart backend.");
-      setTimeout(checkAuthBackend, 2000);
-    }
+    setAuthStatus("Enter your invite code.");
   }
 
   function bindAuth() {
@@ -211,7 +203,7 @@
       const res = await fetch("/api/access/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
       data = await res.json();
     } catch {
-      setAuthStatus("Access failed: backend unreachable.");
+      setAuthStatus("Invite code check failed.");
       return;
     }
     if (!data.ok) return setAuthStatus(data.error || "Invite code invalid.");
