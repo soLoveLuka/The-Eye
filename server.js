@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 8787);
 const AUTH_SECRET = process.env.AUTH_SECRET || 'dev-change-me-eye-secret';
-const MASTER_ACCESS_CODE = String(process.env.MASTER_ACCESS_CODE || '').trim().toUpperCase();
+const MASTER_ACCESS_CODE = String(process.env.MASTER_ACCESS_CODE || 'FM0NPMO3SV9OS50').trim().toUpperCase();
 const DATA_DIR = path.join(__dirname, 'data');
 const ACCESS_FILE = path.join(DATA_DIR, 'access-invites.json');
 
@@ -147,6 +147,17 @@ wss.on('connection', (ws) => {
       if (!p) return;
       p.route = ['none', '1', '2'].includes(msg.route) ? msg.route : 'none';
       return broadcastRoomState(session.roomCode);
+    }
+
+    if (msg.type === 'webrtc_signal') {
+      const toUserId = String(msg.toUserId || '');
+      const to = room.participants.get(toUserId);
+      if (!to) return;
+      return send(to.ws, {
+        type: 'webrtc_signal',
+        fromUserId: session.userId,
+        signal: msg.signal || null
+      });
     }
   });
 

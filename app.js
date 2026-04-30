@@ -77,6 +77,8 @@
     roomCode: "",
     authToken: "",
     isMasterAccess: false,
+    peerConnections: {},
+    remoteStreams: {},
     authProfile: null,
     hypercube: {
       dragging: false,
@@ -325,6 +327,10 @@
     }
     if (msg.type === "error" && msg.message) {
       setAudioStatus(msg.message);
+      return;
+    }
+    if (msg.type === "webrtc_signal") {
+      handleWebRtcSignal(msg);
     }
   }
 
@@ -347,9 +353,101 @@
       meter: null
     }));
     state.booths = localBooths;
+    reconcilePeers();
     if (!state.booths.find((b) => b.id === state.activeBoothId)) state.activeBoothId = 1;
     renderBooths(state.participantCount);
     refreshActiveBooth();
+  }
+
+  function getLocalMediaStream() {
+    const audioTracks = state.audioStream?.getAudioTracks?.() || [];
+    const videoTracks = state.stream?.getVideoTracks?.() || [];
+    if (!audioTracks.length && !videoTracks.length) return null;
+    return new MediaStream([...audioTracks, ...videoTracks]);
+  }
+
+  function rtcConfig() {
+    return { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }] };
+  }
+
+  function reconcilePeers() {
+    if (!state.clientId) return;
+    const targets = state.booths.map((b) => b.userId).filter((id) => id && id !== state.clientId);
+    Object.keys(state.peerConnections).forEach((id) => {
+      if (!targets.includes(id)) closePeer(id);
+    });
+    targets.forEach((id) => {
+      if (!state.peerConnections[id]) createPeer(id);
+    });
+  }
+
+  function createPeer(targetUserId) {
+    const pc = new RTCPeerConnection(rtcConfig());
+    state.peerConnections[targetUserId] = pc;
+    const local = getLocalMediaStream();
+    if (local) local.getTracks().forEach((t) => pc.addTrack(t, local));
+    pc.onicecandidate = (event) => {
+      if (!event.candidate) return;
+      sendSocket({ type: "webrtc_signal", toUserId: targetUserId, signal: { kind: "ice", candidate: event.candidate } });
+    };
+    pc.ontrack = (event) => {
+      state.remoteStreams[targetUserId] = event.streams[0];
+    };
+    if (state.clientId < targetUserId) {
+      pc.createOffer()
+        .then((offer) => pc.setLocalDescription(offer).then(() => offer))
+        .then((offer) => sendSocket({ type: "webrtc_signal", toUserId: targetUserId, signal: { kind: "offer", sdp: offer } }))
+        .catch(() => {});
+    }
+    return pc;
+  }
+
+  function closePeer(targetUserId) {
+    const pc = state.peerConnections[targetUserId];
+    if (pc) pc.close();
+    delete state.peerConnections[targetUserId];
+    delete state.remoteStreams[targetUserId];
+  }
+
+  function refreshPeerTracks() {
+    const local = getLocalMediaStream();
+    Object.values(state.peerConnections).forEach((pc) => {
+      const senders = pc.getSenders();
+      const tracks = local ? local.getTracks() : [];
+      tracks.forEach((track) => {
+        const exists = senders.find((s) => s.track && s.track.kind === track.kind);
+        if (!exists) pc.addTrack(track, local);
+      });
+      senders.forEach((sender) => {
+        if (!sender.track) return;
+        const stillPresent = tracks.some((t) => t.id === sender.track.id);
+        if (!stillPresent) pc.removeTrack(sender);
+      });
+    });
+  }
+
+  function handleWebRtcSignal(msg) {
+    const from = String(msg.fromUserId || "");
+    const signal = msg.signal || {};
+    if (!from || !signal.kind) return;
+    const ensure = state.peerConnections[from] || createPeer(from) || state.peerConnections[from];
+    const pc = ensure;
+    if (!pc) return;
+    if (signal.kind === "offer" && signal.sdp) {
+      pc.setRemoteDescription(new RTCSessionDescription(signal.sdp))
+        .then(() => pc.createAnswer())
+        .then((answer) => pc.setLocalDescription(answer).then(() => answer))
+        .then((answer) => sendSocket({ type: "webrtc_signal", toUserId: from, signal: { kind: "answer", sdp: answer } }))
+        .catch(() => {});
+      return;
+    }
+    if (signal.kind === "answer" && signal.sdp) {
+      pc.setRemoteDescription(new RTCSessionDescription(signal.sdp)).catch(() => {});
+      return;
+    }
+    if (signal.kind === "ice" && signal.candidate) {
+      pc.addIceCandidate(new RTCIceCandidate(signal.candidate)).catch(() => {});
+    }
   }
 
   function onGateSubmit(event) {
@@ -605,6 +703,7 @@
       state.gainNode = gainNode;
       state.analyser = analyser;
       applyMicGain();
+      refreshPeerTracks();
       await refreshDeviceMenus();
       setAudioStatus("Mic live.");
       updateMicButton();
@@ -758,6 +857,7 @@
       state.audioStream = null;
     }
     state.analyser = null;
+    refreshPeerTracks();
     await ensureMicInput();
   }
 
@@ -844,6 +944,7 @@
     }
     try {
       state.stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      refreshPeerTracks();
       applyTvRouting();
       shareScreen.textContent = "Stop share";
       const track = state.stream.getVideoTracks()[0];
@@ -874,12 +975,14 @@
   function stopScreenShare() {
     if (state.stream) state.stream.getTracks().forEach((t) => t.stop());
     state.stream = null;
+    refreshPeerTracks();
     applyTvRouting();
     shareScreen.textContent = "Share screen + audio";
   }
 
   function leaveRoomNow() {
     stopScreenShare();
+    Object.keys(state.peerConnections).forEach((id) => closePeer(id));
     sendSocket({ type: "leave_room", roomCode: state.roomCode });
     state.roomCode = "";
     setMode("gate");
