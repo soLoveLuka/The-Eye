@@ -17,10 +17,23 @@ button { cursor: pointer; }
 .auth-shell { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; background: radial-gradient(circle at 20% 0%, rgba(96,36,180,.35), rgba(0,0,0,.9) 42%), rgba(0,0,0,.84); backdrop-filter: blur(14px); }
 .auth-shell[hidden] { display: none; }
 .auth-veil { width: min(560px, 92vw); padding: clamp(18px, 4vw, 36px); }
-.tesseract-mark { width: 72px; height: 72px; margin: 4px auto 20px; position: relative; transform-style: preserve-3d; animation: spinTesseract 7s linear infinite; }
-.tesseract-mark span { position: absolute; inset: 10px; border: 1px solid rgba(244,239,226,.6); box-shadow: 0 0 18px rgba(130,70,255,.4), 0 0 28px rgba(244,201,93,.18); }
-.tesseract-mark span:last-child { inset: 0; transform: rotate(45deg) scale(.78); border-color: rgba(244,201,93,.75); }
-@keyframes spinTesseract { from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);} to { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);} }
+.tesseract-mark { width: 86px; height: 86px; margin: 4px auto 20px; position: relative; transform-style: preserve-3d; animation: spinTesseract 8s linear infinite; perspective: 900px; }
+.tesseract-mark .face,
+.tesseract-mark .inner { position: absolute; inset: 0; border: 1px solid rgba(244,239,226,.58); box-shadow: 0 0 18px rgba(130,70,255,.42), 0 0 28px rgba(244,201,93,.22); backface-visibility: visible; }
+.tesseract-mark .inner { inset: 14px; border-color: rgba(244,201,93,.8); }
+.tesseract-mark .f1 { transform: translateZ(20px); }
+.tesseract-mark .f2 { transform: rotateY(180deg) translateZ(20px); }
+.tesseract-mark .f3 { transform: rotateY(90deg) translateZ(20px); }
+.tesseract-mark .f4 { transform: rotateY(-90deg) translateZ(20px); }
+.tesseract-mark .f5 { transform: rotateX(90deg) translateZ(20px); }
+.tesseract-mark .f6 { transform: rotateX(-90deg) translateZ(20px); }
+.tesseract-mark .i1 { transform: translateZ(-8px) scale(.86); }
+.tesseract-mark .i2 { transform: rotateY(180deg) translateZ(-8px) scale(.86); }
+.tesseract-mark .i3 { transform: rotateY(90deg) translateZ(-8px) scale(.86); }
+.tesseract-mark .i4 { transform: rotateY(-90deg) translateZ(-8px) scale(.86); }
+.tesseract-mark .i5 { transform: rotateX(90deg) translateZ(-8px) scale(.86); }
+.tesseract-mark .i6 { transform: rotateX(-90deg) translateZ(-8px) scale(.86); }
+@keyframes spinTesseract { from { transform: rotateX(16deg) rotateY(0deg) rotateZ(6deg);} to { transform: rotateX(376deg) rotateY(360deg) rotateZ(366deg);} }
 .auth-veil label { text-transform: uppercase; letter-spacing: .18em; }
 .auth-veil input { border: 0; border-bottom: 1px solid rgba(244,239,226,.28); border-radius: 0; background: transparent; padding: 10px 0; color: rgba(255,249,236,.98); caret-color: rgba(244,201,93,.96); letter-spacing: .06em; text-shadow: 0 0 12px rgba(140,82,255,.25); transition: border-color .12s linear, transform .12s linear, text-shadow .12s linear; }
 .auth-veil input::placeholder { color: rgba(244,239,226,.35); letter-spacing: .12em; }
