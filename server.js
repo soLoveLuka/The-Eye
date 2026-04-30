@@ -48,6 +48,10 @@ const server = http.createServer(async (req, res) => {
 
 async function handleApi(req, res) {
   try {
+    if (req.method === 'GET' && req.url === '/api/health') {
+      return json(res, 200, { ok: true, auth: true, storage: fs.existsSync(USERS_FILE) });
+    }
+
     if (req.method === 'POST' && req.url === '/api/signup') {
       const body = await readJson(req);
       const username = String(body.username || '').trim();

@@ -140,8 +140,19 @@
     refreshDeviceMenus().catch(() => {});
     bindAuth();
     restoreAuth();
+    checkAuthBackend();
     initHypercube();
     tickMic();
+  }
+
+  async function checkAuthBackend() {
+    try {
+      const res = await fetch("/api/health", { cache: "no-store" });
+      const data = await res.json();
+      if (!data?.ok) setAuthStatus("Auth backend unavailable.");
+    } catch {
+      setAuthStatus("Cannot reach auth server. Start/restart backend.");
+    }
   }
 
   function bindAuth() {
@@ -202,8 +213,22 @@
       setAuthStatus("Username and password required.");
       return;
     }
-    const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = await res.json();
+    if (body.username.length < 3 || body.username.length > 24 || /\s/.test(body.username)) {
+      setAuthStatus("Username must be 3–24 chars with no spaces.");
+      return;
+    }
+    if (body.password.length < 8) {
+      setAuthStatus("Password must be at least 8 characters.");
+      return;
+    }
+    let data;
+    try {
+      const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      data = await res.json();
+    } catch {
+      setAuthStatus("Signup failed: backend unreachable.");
+      return;
+    }
     if (!data.ok) {
       setAuthStatus(data.error || "Signup failed.");
       return;
@@ -228,8 +253,14 @@
       setAuthStatus("Username and password required.");
       return;
     }
-    const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = await res.json();
+    let data;
+    try {
+      const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      data = await res.json();
+    } catch {
+      setAuthStatus("Login failed: backend unreachable.");
+      return;
+    }
     if (!data.ok) {
       setAuthStatus(data.error || "Login failed.");
       return;
