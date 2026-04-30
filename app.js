@@ -56,12 +56,13 @@
   const accessInviteHint = document.getElementById("accessInviteHint");
   const SIGNAL_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
   const DEMO_MASTER_CODE = "FM0NPMO3SV9OS50";
-  const LOCAL_INVITES_KEY = "the-eye-local-invites-v1";
 
   const ROOM_SIZES = ["studio", "loft", "warehouse", "cathedral"];
 
   const CREATE_QUESTIONS = [
     { key: "passcode", prompt: "WHAT'S THE PASSCODE?", type: "text", normalize: (v) => normalizeCode(v), validate: (v) => v.length >= 3, hint: "3-18 chars (A-Z, 0-9, -)" },
+    { key: "name", prompt: "YOUR NAME FOR THIS CALL?", type: "text", normalize: (v) => String(v || "").trim().slice(0, 24), validate: (v) => v.length >= 2, hint: "Enter at least 2 characters" },
+    { key: "bio", prompt: "YOUR BIO FOR THIS CALL?", type: "text", normalize: (v) => String(v || "").trim().slice(0, 140), validate: (v) => v.length >= 2, hint: "Enter at least 2 characters" },
     { key: "heads", prompt: "HOW MANY HEADS? (1-20)", type: "number", min: 1, max: 20, normalize: (v) => clampInt(v, 1, 20, 8), validate: (v) => v >= 1 && v <= 20, hint: "Enter a number from 1 to 20" },
     { key: "booths", prompt: "BOOTH COUNT? (1-20)", type: "number", min: 1, max: 20, normalize: (v) => clampInt(v, 1, 20, 8), validate: (v, answers) => v >= 1 && v <= 20 && v <= clampInt(answers.heads, 1, 20, 20), hint: "Must be <= head count" },
     { key: "color", prompt: "ROOM COLOR? (USE THE COLOR WHEEL)", type: "color", normalize: (v) => String(v || "").trim().toUpperCase(), validate: (v) => /^#[0-9A-F]{6}$/.test(v), hint: "Pick any color from the wheel" }
@@ -69,7 +70,9 @@
 
   const JOIN_QUESTIONS = [
     { key: "passcode", prompt: "SERVER PASSCODE?", type: "text", normalize: (v) => normalizeCode(v), validate: (v) => v.length >= 3, hint: "Ask host for passcode" },
-    { key: "invite", prompt: "INVITE CODE?", type: "text", normalize: (v) => String(v || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10), validate: (v) => v.length >= 6, hint: "Ask host for invite code" }
+    { key: "invite", prompt: "INVITE CODE?", type: "text", normalize: (v) => String(v || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10), validate: (v) => v.length >= 6, hint: "Ask host for invite code" },
+    { key: "name", prompt: "YOUR NAME FOR THIS CALL?", type: "text", normalize: (v) => String(v || "").trim().slice(0, 24), validate: (v) => v.length >= 2, hint: "Enter at least 2 characters" },
+    { key: "bio", prompt: "YOUR BIO FOR THIS CALL?", type: "text", normalize: (v) => String(v || "").trim().slice(0, 140), validate: (v) => v.length >= 2, hint: "Enter at least 2 characters" }
   ];
 
   const state = {
@@ -81,6 +84,7 @@
     authToken: "",
     isMasterAccess: false,
     accessMode: "server",
+    localInvites: [],
     iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
     peerConnections: {},
     remoteStreams: {},
@@ -139,7 +143,6 @@
     prepareEye();
     bindEvents();
     setMode("gate");
-    loadProfile();
     syncProfileForm();
     renderLetters("");
     focusInputSoon();
@@ -201,18 +204,10 @@
   }
 
   function restoreAuth() {
-    try {
-      const token = localStorage.getItem("the-eye-auth-token") || "";
-      const master = localStorage.getItem("the-eye-master-access") === "1";
-      if (token) {
-        state.authToken = token;
-        state.isMasterAccess = master;
-        authShell.hidden = true;
-        accessInviteHint.hidden = !state.isMasterAccess;
-      }
-    } catch {
-      // ignore storage errors
-    }
+    state.authToken = "";
+    state.isMasterAccess = false;
+    authShell.hidden = false;
+    accessInviteHint.hidden = true;
   }
 
   async function loginWithInvite() {
@@ -230,10 +225,6 @@
     state.authToken = data.token || "";
     state.isMasterAccess = !!data.isMaster;
     state.accessMode = "server";
-    try {
-      localStorage.setItem("the-eye-auth-token", state.authToken);
-      localStorage.setItem("the-eye-master-access", state.isMasterAccess ? "1" : "0");
-    } catch {}
     accessInviteHint.hidden = !state.isMasterAccess;
     enterEyeHome(state.isMasterAccess ? "Master access granted." : "Access granted.");
   }
@@ -249,30 +240,16 @@
     state.authToken = `local-${isMaster ? "master" : "invitee"}-${Date.now()}`;
     state.isMasterAccess = isMaster;
     state.accessMode = "local";
-    try {
-      localStorage.setItem("the-eye-auth-token", state.authToken);
-      localStorage.setItem("the-eye-master-access", state.isMasterAccess ? "1" : "0");
-    } catch {}
     accessInviteHint.hidden = !state.isMasterAccess;
     enterEyeHome(isMaster ? "Master access granted (local mode)." : "Access granted (local mode).");
   }
 
   function readLocalInvites() {
-    try {
-      const raw = localStorage.getItem(LOCAL_INVITES_KEY);
-      const arr = JSON.parse(raw || "[]");
-      return Array.isArray(arr) ? arr.map((v) => String(v || "").toUpperCase()) : [];
-    } catch {
-      return [];
-    }
+    return Array.isArray(state.localInvites) ? state.localInvites : [];
   }
 
   function writeLocalInvites(invites) {
-    try {
-      localStorage.setItem(LOCAL_INVITES_KEY, JSON.stringify(invites));
-    } catch {
-      // ignore storage errors
-    }
+    state.localInvites = Array.isArray(invites) ? invites : [];
   }
 
   function enterEyeHome(statusText) {
@@ -327,9 +304,9 @@
     agcToggle.addEventListener("change", reconfigureMicStream);
     leaveRoom.addEventListener("click", leaveRoomNow);
     contextDock.addEventListener("click", toggleContextMenu);
-    avatarPageToggle.addEventListener("click", toggleProfilePage);
-    profileClose.addEventListener("click", () => toggleProfilePage(false));
-    profileSave.addEventListener("click", saveProfileFromForm);
+    avatarPageToggle?.addEventListener("click", toggleProfilePage);
+    profileClose?.addEventListener("click", () => toggleProfilePage(false));
+    profileSave?.addEventListener("click", saveProfileFromForm);
     curtainToggle.addEventListener("click", toggleCurtains);
     regenInvite.addEventListener("click", regenInviteCode);
 
@@ -519,7 +496,7 @@
 
     if (!state.authToken) {
       authShell.hidden = false;
-      setWhisper("LOG IN TO CREATE OR JOIN");
+      setWhisper("ENTER CODE TO CREATE OR JOIN");
       return;
     }
 
@@ -613,6 +590,8 @@
     const heads = clampInt(state.interview.answers.heads, 1, 20, 8);
     const boothCount = Math.min(clampInt(state.interview.answers.booths, 1, 20, 8), heads);
     const roomColor = state.interview.answers.color;
+    state.profile.name = state.interview.answers.name || "Guest";
+    state.profile.bio = state.interview.answers.bio || "";
     state.roomCode = passcode;
 
     state.booths = [{
@@ -659,6 +638,8 @@
   function joinRoomFromAnswers() {
     const passcode = state.interview.answers.passcode;
     const invite = state.interview.answers.invite;
+    state.profile.name = state.interview.answers.name || "Guest";
+    state.profile.bio = state.interview.answers.bio || "";
     state.roomCode = passcode;
     setMode("room");
     voidRoom.setAttribute("aria-hidden", "false");
@@ -806,6 +787,7 @@
   }
 
   function toggleProfilePage(force) {
+    if (!profilePage || !avatarPageToggle) return;
     state.profilePageOpen = typeof force === "boolean" ? force : !state.profilePageOpen;
     profilePage.hidden = !state.profilePageOpen;
     avatarPageToggle.setAttribute("aria-expanded", String(state.profilePageOpen));
@@ -859,23 +841,8 @@
     return Math.random().toString(36).replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 12);
   }
 
-  function loadProfile() {
-    try {
-      const raw = localStorage.getItem("the-eye-profile-v1");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      state.profile = {
-        name: String(parsed.name || "You").slice(0, 24),
-        color: String(parsed.color || "#7f70ff"),
-        glyph: String(parsed.glyph || "◈").slice(0, 2),
-        bio: String(parsed.bio || "").slice(0, 280)
-      };
-    } catch {
-      // ignore invalid profile cache
-    }
-  }
-
   function syncProfileForm() {
+    if (!profileName || !profileColor || !profileGlyph || !profileBio) return;
     profileName.value = state.profile.name;
     profileColor.value = state.profile.color;
     profileGlyph.value = state.profile.glyph;
@@ -883,17 +850,13 @@
   }
 
   function saveProfileFromForm() {
+    if (!profileName || !profileColor || !profileGlyph || !profileBio) return;
     state.profile = {
       name: String(profileName.value || "You").trim().slice(0, 24) || "You",
       color: String(profileColor.value || "#7f70ff"),
       glyph: String(profileGlyph.value || "◈").trim().slice(0, 2) || "◈",
       bio: String(profileBio.value || "").trim().slice(0, 280)
     };
-    try {
-      localStorage.setItem("the-eye-profile-v1", JSON.stringify(state.profile));
-    } catch {
-      // storage optional
-    }
     const me = state.booths.find((b) => b.id === 1);
     if (me) {
       me.name = state.profile.name;
