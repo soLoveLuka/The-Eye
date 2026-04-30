@@ -41,6 +41,9 @@
   const agcToggle = document.getElementById("agcToggle");
   const audioStatus = document.getElementById("audioStatus");
   const leaveRoom = document.getElementById("leaveRoom");
+  const contextDock = document.getElementById("contextDock");
+  const roomHud = document.getElementById("roomHud");
+  const SIGNAL_URL = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
 
   const ROOM_SIZES = ["studio", "loft", "warehouse", "cathedral"];
 
@@ -56,6 +59,11 @@
     booths: [],
     activeBoothId: 1,
     micMuted: false,
+    roomCode: "",
+    ws: null,
+    wsConnected: false,
+    clientId: null,
+    participantCount: 0,
     stream: null,
     audioStream: null,
     audioContext: null,
@@ -64,6 +72,7 @@
     analyser: null,
     devicesReady: false,
     micMenuOpen: false,
+    contextOpen: false,
     profileMenuOpen: false,
     profile: {
       name: "You",
@@ -129,6 +138,7 @@
     nsToggle.addEventListener("change", reconfigureMicStream);
     agcToggle.addEventListener("change", reconfigureMicStream);
     leaveRoom.addEventListener("click", leaveRoomNow);
+    contextDock.addEventListener("click", toggleContextMenu);
     profileToggle.addEventListener("click", toggleProfileMenu);
     profileSave.addEventListener("click", saveProfileFromForm);
 
@@ -147,6 +157,74 @@
     const value = normalizeCode(raw);
     input.value = value;
     renderLetters(value);
+  }
+
+  function connectSocket() {
+    if (state.ws && (state.ws.readyState === WebSocket.OPEN || state.ws.readyState === WebSocket.CONNECTING)) return;
+    try {
+      state.ws = new WebSocket(SIGNAL_URL);
+      state.ws.addEventListener("open", () => {
+        state.wsConnected = true;
+        setAudioStatus("Online room sync connected.");
+        if (state.roomCode) {
+          sendSocket({ type: "join_room", roomCode: state.roomCode, profile: state.profile });
+        }
+      });
+      state.ws.addEventListener("close", () => {
+        state.wsConnected = false;
+        setAudioStatus("Offline mode: local room only.");
+      });
+      state.ws.addEventListener("message", (event) => {
+        try {
+          const msg = JSON.parse(String(event.data || "{}"));
+          handleSocketMessage(msg);
+        } catch {
+          // ignore malformed
+        }
+      });
+    } catch {
+      setAudioStatus("Socket setup failed; staying local.");
+    }
+  }
+
+  function sendSocket(payload) {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) return;
+    state.ws.send(JSON.stringify(payload));
+  }
+
+  function handleSocketMessage(msg) {
+    if (msg.type === "welcome") {
+      state.clientId = msg.clientId || null;
+      return;
+    }
+    if (msg.type === "room_state") {
+      applyServerRoomState(msg);
+      return;
+    }
+    if (msg.type === "error" && msg.message) {
+      setAudioStatus(msg.message);
+    }
+  }
+
+  function applyServerRoomState(msg) {
+    if (!Array.isArray(msg.participants)) return;
+    state.participantCount = msg.participants.length;
+    const localBooths = msg.participants.slice(0, 20).map((p, i) => ({
+      id: i + 1,
+      userId: p.userId,
+      name: p.name || `User ${i + 1}`,
+      bio: p.bio || "",
+      glyph: p.glyph || "◉",
+      color: p.color || "",
+      level: Number(p.level || 0),
+      muted: !!p.muted,
+      element: null,
+      meter: null
+    }));
+    state.booths = localBooths;
+    if (!state.booths.find((b) => b.id === state.activeBoothId)) state.activeBoothId = 1;
+    renderBooths(state.participantCount);
+    refreshActiveBooth();
   }
 
   function onGateSubmit(event) {
@@ -223,6 +301,7 @@
     const heads = state.interview.answers.heads;
     const boothCount = Math.min(state.interview.answers.booths, 20, heads);
     const colors = state.interview.answers.colors;
+    state.roomCode = passcode;
 
     state.booths = Array.from({ length: boothCount }, (_, i) => ({
       id: i + 1,
@@ -246,9 +325,19 @@
     roomScaleLabel.textContent = ROOM_SIZES[Math.min(ROOM_SIZES.length - 1, Math.floor(boothCount / 6))];
 
     applyColorTheme(colors);
+    connectSocket();
+    sendSocket({
+      type: "create_or_join_room",
+      roomCode: passcode,
+      desiredHeads: heads,
+      desiredBooths: boothCount,
+      profile: state.profile,
+      theme: { colors }
+    });
     ensureMicInput();
     applyTvRouting();
     applyOthersVolume();
+    toggleContextMenu(false);
     setWhisper("");
     input.value = "";
   }
@@ -287,6 +376,7 @@
         if (e.target instanceof HTMLElement && e.target.classList.contains("boothMute")) {
           booth.muted = !booth.muted;
           syncBoothUi(booth);
+          sendSocket({ type: "mute_participant", roomCode: state.roomCode, targetUserId: booth.userId, muted: booth.muted });
           return;
         }
         state.activeBoothId = booth.id;
@@ -370,6 +460,13 @@
     micMenuToggle.classList.toggle("is-open", state.micMenuOpen);
   }
 
+  function toggleContextMenu(force) {
+    state.contextOpen = typeof force === "boolean" ? force : !state.contextOpen;
+    roomHud.hidden = !state.contextOpen;
+    contextDock.setAttribute("aria-expanded", String(state.contextOpen));
+    contextDock.classList.toggle("is-open", state.contextOpen);
+  }
+
   function toggleProfileMenu() {
     state.profileMenuOpen = !state.profileMenuOpen;
     profileMenu.hidden = !state.profileMenuOpen;
@@ -420,6 +517,7 @@
       renderBooths(Math.max(state.booths.length, 2));
       refreshActiveBooth();
     }
+    sendSocket({ type: "profile_update", roomCode: state.roomCode, profile: state.profile });
     setAudioStatus("Profile saved.");
   }
 
@@ -509,6 +607,7 @@
         const glow = Math.max(0.14, level / 90);
         active.element.style.background = `linear-gradient(120deg, hsla(${hue}, 90%, ${46 + level * 0.12}%, ${glow}), hsla(${(hue + 55) % 360}, 84%, ${34 + level * 0.1}%, ${Math.max(0.18, glow * 0.7)}))`;
         active.element.style.boxShadow = `0 0 ${10 + level * 0.45}px hsla(${hue}, 92%, 65%, ${Math.min(0.58, glow)}), 0 0 ${8 + level * 0.25}px hsla(${(hue + 55) % 360}, 90%, 58%, ${Math.min(0.45, glow * 0.8)})`;
+        sendSocket({ type: "level", roomCode: state.roomCode, level });
       }
     }
     requestAnimationFrame(tickMic);
@@ -567,6 +666,7 @@
         tv?.classList.remove("on");
       }
     });
+    sendSocket({ type: "tv_route", roomCode: state.roomCode, route });
     if (route === "none") setAudioStatus("TV routing off.");
     else setAudioStatus(`Routing to TV ${route}${state.stream ? " (live)" : " (awaiting share)"}.`);
   }
@@ -580,16 +680,23 @@
 
   function leaveRoomNow() {
     stopScreenShare();
+    sendSocket({ type: "leave_room", roomCode: state.roomCode });
+    state.roomCode = "";
     setMode("gate");
     state.interview.active = false;
     input.value = "";
     renderLetters("");
     setWhisper("");
+    toggleContextMenu(false);
     focusInputSoon();
   }
 
   function onKeyDown(event) {
     if (event.key === "Escape" && state.mode === "room") {
+      if (state.contextOpen) {
+        toggleContextMenu(false);
+        return;
+      }
       leaveRoomNow();
       return;
     }

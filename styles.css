@@ -57,7 +57,9 @@ input, select { width: 100%; color: var(--bone); background: rgba(244,239,226,.0
 
 .booth-panel, .room-hud { position: fixed; width: min(360px, 32vw); border: 1px solid rgba(244,239,226,.12); border-radius: 24px; background: rgba(0,0,0,.48); backdrop-filter: blur(20px); padding: 18px; }
 .booth-panel { left: 20px; top: 20px; bottom: 20px; overflow: auto; }
-.room-hud { right: 20px; bottom: 20px; }
+.room-hud { right: 20px; top: 20px; bottom: 20px; overflow: auto; }
+.context-dock { position: fixed; right: 20px; top: 20px; z-index: 70; width: 38px; height: 38px; border-radius: 999px; border: 1px solid rgba(244,239,226,.25); background: rgba(8,8,14,.72); color: var(--bone); font-size: 1rem; line-height: 1; display: grid; place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.context-dock.is-open { border-color: rgba(244,201,93,.62); box-shadow: 0 0 20px rgba(244,201,93,.22); }
 .panel-hint { margin: 12px 0 0; color: rgba(244,239,226,.42); font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; }
 kbd { padding: 1px 5px; border: 1px solid rgba(244,239,226,.28); border-radius: 5px; font-size: .6rem; background: rgba(255,255,255,.04); }
 .profile-menu { margin-top: 10px; display: grid; gap: 10px; padding-top: 10px; border-top: 1px solid rgba(244,239,226,.12); }
@@ -99,5 +101,6 @@ kbd { padding: 1px 5px; border: 1px solid rgba(244,239,226,.28); border-radius: 
 @media (max-width: 1100px) {
   .screen-wall { left: 12px; right: 12px; bottom: 200px; top: auto; transform: none; grid-template-columns: 1fr 1fr; }
   .booth-panel { width: calc(100vw - 24px); left: 12px; right: 12px; top: 12px; bottom: auto; max-height: 44vh; }
-  .room-hud { width: calc(100vw - 24px); left: 12px; right: 12px; bottom: 12px; }
+  .room-hud { width: calc(100vw - 24px); left: 12px; right: 12px; top: auto; bottom: 12px; max-height: 46vh; }
+  .context-dock { right: 12px; top: 12px; }
 }

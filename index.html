@@ -92,7 +92,9 @@
         <article class="tv" data-tv="2"><header>TV 2</header><video id="tv2" autoplay muted playsinline></video><p>OFFLINE</p></article>
       </section>
 
-      <aside class="room-hud" aria-label="Room controls">
+      <button class="context-dock" id="contextDock" type="button" aria-expanded="false" aria-controls="roomHud" aria-label="Open room controls">◉</button>
+
+      <aside class="room-hud" id="roomHud" aria-label="Room controls" hidden>
         <label>Route your booth to TV
           <select id="tvRoute" aria-label="TV route">
             <option value="none">Off</option>
