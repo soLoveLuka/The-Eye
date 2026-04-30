@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 8787);
 const AUTH_SECRET = process.env.AUTH_SECRET || 'dev-change-me-eye-secret';
-const MASTER_ACCESS_CODE = 'FM0NPMO3SV9OS50';
+const MASTER_ACCESS_CODE = String(process.env.MASTER_ACCESS_CODE || '').trim().toUpperCase();
 const DATA_DIR = path.join(__dirname, 'data');
 const ACCESS_FILE = path.join(DATA_DIR, 'access-invites.json');
 
@@ -58,7 +58,7 @@ async function handleApi(req, res) {
       const code = String(body.code || '').trim().toUpperCase();
       if (!code) return json(res, 400, { ok: false, error: 'Invite code required.' });
 
-      if (code === MASTER_ACCESS_CODE) {
+      if (MASTER_ACCESS_CODE && code === MASTER_ACCESS_CODE) {
         const token = signToken({ role: 'master', code });
         return json(res, 200, { ok: true, token, isMaster: true });
       }
