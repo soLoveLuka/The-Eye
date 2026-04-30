@@ -167,6 +167,14 @@
       state.hypercube.ax += dy * 0.006;
     });
     hypercubeCanvas?.addEventListener("pointerup", () => { state.hypercube.dragging = false; });
+
+    const submitFromInput = (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      login();
+    };
+    authUsername.addEventListener("keydown", submitFromInput);
+    authPassword.addEventListener("keydown", submitFromInput);
   }
 
   function setAuthStatus(text) {
@@ -190,10 +198,18 @@
       username: authUsername.value.trim(),
       password: authPassword.value
     };
+    if (!body.username || !body.password) {
+      setAuthStatus("Username and password required.");
+      return;
+    }
     const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
-    setAuthStatus(data.ok ? "Signup complete. You can log in." : (data.error || "Signup failed."));
-    if (!data.ok) loadCaptcha();
+    if (!data.ok) {
+      setAuthStatus(data.error || "Signup failed.");
+      return;
+    }
+    setAuthStatus("Signup complete. Logging you in…");
+    await login();
   }
 
   async function login() {
@@ -201,6 +217,10 @@
       username: authUsername.value.trim(),
       password: authPassword.value
     };
+    if (!body.username || !body.password) {
+      setAuthStatus("Username and password required.");
+      return;
+    }
     const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!data.ok) {
