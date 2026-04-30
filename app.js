@@ -190,7 +190,9 @@
     form.addEventListener("submit", onGateSubmit);
     input.addEventListener("input", onType);
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("click", () => state.mode === "gate" && focusInputSoon());
+    window.addEventListener("click", () => {
+      if (state.mode === "gate" && authShell.hidden) focusInputSoon();
+    });
     window.addEventListener("pointermove", onPointerMove, { passive: true });
 
     tvRoute.addEventListener("change", applyTvRouting);
@@ -864,7 +866,14 @@
         return;
       }
     }
-    if (state.mode === "gate" && event.key.length === 1 && document.activeElement !== input) focusInputSoon();
+    if (
+      state.mode === "gate" &&
+      authShell.hidden &&
+      event.key.length === 1 &&
+      document.activeElement !== input
+    ) {
+      focusInputSoon();
+    }
   }
 
   function setMode(mode) {
