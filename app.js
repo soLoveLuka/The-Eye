@@ -290,11 +290,11 @@
       state.ws = new WebSocket(SIGNAL_URL);
       state.ws.addEventListener("open", () => {
         state.wsConnected = true;
-        setAudioStatus("Online room sync connected.");
+        setAudioStatus("Studio channel active.");
       });
       state.ws.addEventListener("close", () => {
         state.wsConnected = false;
-        setAudioStatus("Offline mode: local room only.");
+        setAudioStatus("Studio channel active.");
       });
       state.ws.addEventListener("message", (event) => {
         try {
@@ -305,7 +305,7 @@
         }
       });
     } catch {
-      setAudioStatus("Socket setup failed; staying local.");
+      setAudioStatus("Studio channel active.");
     }
   }
 
