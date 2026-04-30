@@ -77,6 +77,7 @@
     roomCode: "",
     authToken: "",
     isMasterAccess: false,
+    iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }],
     peerConnections: {},
     remoteStreams: {},
     authProfile: null,
@@ -142,8 +143,21 @@
     bindAuth();
     restoreAuth();
     checkAuthBackend();
+    loadIceServers();
     initHypercube();
     tickMic();
+  }
+
+  async function loadIceServers() {
+    try {
+      const res = await fetch("/api/webrtc/ice", { cache: "no-store" });
+      const data = await res.json();
+      if (data?.ok && Array.isArray(data.iceServers) && data.iceServers.length) {
+        state.iceServers = data.iceServers;
+      }
+    } catch {
+      // keep defaults
+    }
   }
 
   async function checkAuthBackend() {
@@ -367,7 +381,7 @@
   }
 
   function rtcConfig() {
-    return { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:global.stun.twilio.com:3478"] }] };
+    return { iceServers: state.iceServers };
   }
 
   function reconcilePeers() {

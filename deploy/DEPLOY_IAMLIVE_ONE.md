@@ -102,8 +102,22 @@ Then test signup/login in browser at:
 
 ---
 
+## 9) TURN (recommended for cross-network reliability)
+
+Add to `.env` (or PM2 env):
+
+```bash
+TURN_URL=turn:turn.iamlive.one:3478?transport=udp
+TURN_USERNAME=<turn-username>
+TURN_CREDENTIAL=<turn-password>
+```
+
+The app auto-fetches ICE config from `GET /api/webrtc/ice`.
+If TURN vars are set, clients will use TURN in addition to STUN.
+
+---
+
 ## 8) GitHub Pages note
 If you currently point users to a GitHub Pages domain, stop using it for this app.
 Auth + websocket app should run from the same origin:
 - `https://iamlive.one`
-

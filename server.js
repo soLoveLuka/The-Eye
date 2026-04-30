@@ -10,6 +10,9 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || 8787);
 const AUTH_SECRET = process.env.AUTH_SECRET || 'dev-change-me-eye-secret';
 const MASTER_ACCESS_CODE = String(process.env.MASTER_ACCESS_CODE || 'FM0NPMO3SV9OS50').trim().toUpperCase();
+const TURN_URL = String(process.env.TURN_URL || '').trim();
+const TURN_USERNAME = String(process.env.TURN_USERNAME || '').trim();
+const TURN_CREDENTIAL = String(process.env.TURN_CREDENTIAL || '').trim();
 const DATA_DIR = path.join(__dirname, 'data');
 const ACCESS_FILE = path.join(DATA_DIR, 'access-invites.json');
 
@@ -51,6 +54,20 @@ async function handleApi(req, res) {
   try {
     if (req.method === 'GET' && req.url === '/api/health') {
       return json(res, 200, { ok: true, auth: true, storage: fs.existsSync(ACCESS_FILE) });
+    }
+
+    if (req.method === 'GET' && req.url === '/api/webrtc/ice') {
+      const iceServers = [
+        { urls: ['stun:stun.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] }
+      ];
+      if (TURN_URL && TURN_USERNAME && TURN_CREDENTIAL) {
+        iceServers.push({
+          urls: [TURN_URL],
+          username: TURN_USERNAME,
+          credential: TURN_CREDENTIAL
+        });
+      }
+      return json(res, 200, { ok: true, iceServers });
     }
 
     if (req.method === 'POST' && req.url === '/api/access/login') {
