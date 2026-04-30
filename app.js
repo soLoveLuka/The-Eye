@@ -6,6 +6,7 @@
   const form = document.getElementById("portalForm");
   const input = document.getElementById("portalInput");
   const typedWord = document.getElementById("typedWord");
+  const roomColorWheel = document.getElementById("roomColorWheel");
   const whisper = document.getElementById("whisper");
   const authShell = document.getElementById("authShell");
   const hypercubeCanvas = document.getElementById("hypercubeCanvas");
@@ -63,7 +64,7 @@
     { key: "passcode", prompt: "WHAT'S THE PASSCODE?", type: "text", normalize: (v) => normalizeCode(v), validate: (v) => v.length >= 3, hint: "3-18 chars (A-Z, 0-9, -)" },
     { key: "heads", prompt: "HOW MANY HEADS? (1-20)", type: "number", min: 1, max: 20, normalize: (v) => clampInt(v, 1, 20, 8), validate: (v) => v >= 1 && v <= 20, hint: "Enter a number from 1 to 20" },
     { key: "booths", prompt: "BOOTH COUNT? (1-20)", type: "number", min: 1, max: 20, normalize: (v) => clampInt(v, 1, 20, 8), validate: (v, answers) => v >= 1 && v <= 20 && v <= clampInt(answers.heads, 1, 20, 20), hint: "Must be <= head count" },
-    { key: "color", prompt: "ROOM COLOR? (HTML HEX, e.g. #7F70FF)", type: "text", normalize: (v) => String(v || "").trim().toUpperCase(), validate: (v) => /^#[0-9A-F]{6}$/.test(v), hint: "Use full hex like #1A2B3C" }
+    { key: "color", prompt: "ROOM COLOR? (USE THE COLOR WHEEL)", type: "color", normalize: (v) => String(v || "").trim().toUpperCase(), validate: (v) => /^#[0-9A-F]{6}$/.test(v), hint: "Pick any color from the wheel" }
   ];
 
   const JOIN_QUESTIONS = [
@@ -287,6 +288,14 @@
   function bindEvents() {
     form.addEventListener("submit", onGateSubmit);
     input.addEventListener("input", onType);
+    roomColorWheel?.addEventListener("input", () => {
+      if (!state.interview.active) return;
+      const list = state.interview.mode === "join" ? JOIN_QUESTIONS : CREATE_QUESTIONS;
+      const q = list[state.interview.step];
+      if (!q || q.key !== "color") return;
+      state.interview.typing = String(roomColorWheel.value || "#7F70FF").toUpperCase();
+      renderQuestionFrame();
+    });
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("click", () => {
       if (state.mode === "gate" && authShell.hidden) focusInputSoon();
@@ -540,6 +549,7 @@
     state.interview.step = 0;
     state.interview.answers = {};
     state.interview.typing = "";
+    roomColorWheel.hidden = true;
     input.value = "";
     renderQuestionFrame(false);
     setWhisper(mode === "join" ? "JOIN FLOW. ANSWER + ENTER." : "CREATE FLOW. ANSWER + ENTER.");
@@ -549,6 +559,14 @@
     const list = state.interview.mode === "join" ? JOIN_QUESTIONS : CREATE_QUESTIONS;
     const q = list[state.interview.step];
     if (!q) return;
+
+    if (q.key === "color") {
+      roomColorWheel.hidden = false;
+      roomColorWheel.value = /^#[0-9a-fA-F]{6}$/.test(String(state.profile.color || "")) ? state.profile.color : "#7f70ff";
+      state.interview.typing = String(roomColorWheel.value || "#7F70FF").toUpperCase();
+    } else {
+      roomColorWheel.hidden = true;
+    }
 
     const answerPreview = state.interview.typing ? `\n${state.interview.typing}` : "";
     const text = `${q.prompt}${answerPreview}`;
@@ -563,7 +581,7 @@
     const q = list[state.interview.step];
     if (!q) return;
 
-    const raw = state.interview.typing;
+    const raw = q.key === "color" ? roomColorWheel.value : state.interview.typing;
     const value = q.normalize(raw);
     if (!q.validate(value, state.interview.answers)) {
       setWhisper(q.hint || "Invalid answer.");
@@ -578,6 +596,7 @@
     triggerFall();
 
     if (state.interview.step >= list.length) {
+      roomColorWheel.hidden = true;
       setTimeout(() => {
         state.interview.active = false;
         if (state.interview.mode === "join") joinRoomFromAnswers();
@@ -1055,6 +1074,7 @@
     state.roomCode = "";
     setMode("gate");
     state.interview.active = false;
+    roomColorWheel.hidden = true;
     input.value = "";
     renderLetters("");
     setWhisper("");

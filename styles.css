@@ -88,6 +88,7 @@ button { cursor: pointer; }
 @keyframes letterFall { 100% { opacity: 0; filter: blur(14px); transform: translate3d(calc(var(--fall-x)*1px),calc(var(--fall-y)*1px),-220px) rotate(calc(var(--fall-rotate)*1deg)) scale(.08);} }
 .whisper { position: fixed; left: 50%; top: calc(50% + 70px); transform: translateX(-50%) translateY(12px); opacity: 0; color: rgba(239,235,224,.36); font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; filter: blur(4px); transition: opacity .7s var(--ease), transform .7s var(--ease), filter .7s var(--ease); }
 .whisper.visible { opacity: 1; transform: translateX(-50%) translateY(0); filter: blur(0); }
+.room-color-wheel { position: fixed; left: 50%; top: calc(50% + 110px); transform: translateX(-50%); width: 72px; height: 72px; border: 0; background: transparent; padding: 0; z-index: 60; }
 
 .creator { z-index: 30; opacity: 0; pointer-events: none; transition: opacity .9s var(--ease); background: radial-gradient(circle at 50% 45%, rgba(32,24,58,.74), #000 68%); }
 .eye-shell[data-mode="creator"] .creator { opacity: 1; pointer-events: auto; }
