@@ -10,11 +10,9 @@
   const authShell = document.getElementById("authShell");
   const authUsername = document.getElementById("authUsername");
   const authPassword = document.getElementById("authPassword");
-  const authCaptchaPrompt = document.getElementById("authCaptchaPrompt");
-  const authCaptchaAnswer = document.getElementById("authCaptchaAnswer");
+  const authShowPassword = document.getElementById("authShowPassword");
   const authSignup = document.getElementById("authSignup");
   const authLogin = document.getElementById("authLogin");
-  const authCaptchaRefresh = document.getElementById("authCaptchaRefresh");
   const authStatus = document.getElementById("authStatus");
 
   const voidRoom = document.getElementById("voidRoom");
@@ -80,7 +78,6 @@
     roomCode: "",
     authToken: "",
     authProfile: null,
-    captchaId: "",
     ws: null,
     wsConnected: false,
     clientId: null,
@@ -134,12 +131,8 @@
   function bindAuth() {
     authSignup.addEventListener("click", signup);
     authLogin.addEventListener("click", login);
-    authCaptchaRefresh.addEventListener("click", loadCaptcha);
-    window.addEventListener("online", () => {
-      if (!authShell.hidden) loadCaptcha();
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && !authShell.hidden && !state.captchaId) loadCaptcha();
+    authShowPassword.addEventListener("change", () => {
+      authPassword.type = authShowPassword.checked ? "text" : "password";
     });
   }
 
@@ -153,52 +146,16 @@
       if (token) {
         state.authToken = token;
         authShell.hidden = true;
-      } else {
-        loadCaptcha();
       }
     } catch {
       // ignore storage errors
-      loadCaptcha();
     }
-  }
-
-  function setAuthBusy(busy) {
-    authSignup.disabled = busy;
-    authLogin.disabled = busy;
-    authCaptchaRefresh.disabled = busy;
-  }
-
-  async function loadCaptcha(retries = 3) {
-    setAuthBusy(true);
-    state.captchaId = "";
-    authCaptchaPrompt.textContent = "Loading challenge…";
-    for (let i = 0; i < retries; i += 1) {
-      try {
-        const res = await fetch(`/api/captcha?t=${Date.now()}`, { cache: "no-store" });
-        const data = await res.json();
-        if (data?.ok && data.captchaId && data.prompt) {
-          state.captchaId = data.captchaId;
-          authCaptchaPrompt.textContent = data.prompt;
-          authCaptchaAnswer.value = "";
-          setAuthStatus("Ready.");
-          setAuthBusy(false);
-          return;
-        }
-      } catch {}
-      await new Promise((resolve) => setTimeout(resolve, 180 * (i + 1)));
-    }
-    authCaptchaPrompt.textContent = "Challenge unavailable. Tap New captcha.";
-    setAuthStatus("Captcha failed to load. Retry.");
-    setAuthBusy(false);
   }
 
   async function signup() {
-    if (!state.captchaId) return loadCaptcha();
     const body = {
       username: authUsername.value.trim(),
-      password: authPassword.value,
-      captchaId: state.captchaId,
-      captchaAnswer: authCaptchaAnswer.value.trim()
+      password: authPassword.value
     };
     const res = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
@@ -207,18 +164,14 @@
   }
 
   async function login() {
-    if (!state.captchaId) return loadCaptcha();
     const body = {
       username: authUsername.value.trim(),
-      password: authPassword.value,
-      captchaId: state.captchaId,
-      captchaAnswer: authCaptchaAnswer.value.trim()
+      password: authPassword.value
     };
     const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!data.ok) {
       setAuthStatus(data.error || "Login failed.");
-      loadCaptcha();
       return;
     }
     state.authToken = data.token;

@@ -11,11 +11,9 @@ const PORT = Number(process.env.PORT || 8787);
 const AUTH_SECRET = process.env.AUTH_SECRET || 'dev-change-me-eye-secret';
 const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const OUTBOX_FILE = path.join(DATA_DIR, 'outbox.log');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify({ users: [] }, null, 2));
-if (!fs.existsSync(OUTBOX_FILE)) fs.writeFileSync(OUTBOX_FILE, '');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -31,7 +29,6 @@ const MIME = {
 
 const rooms = new Map();
 const sockets = new Map();
-const captchas = new Map();
 
 const server = http.createServer(async (req, res) => {
   if ((req.url || '').startsWith('/api/')) return handleApi(req, res);
@@ -51,28 +48,12 @@ const server = http.createServer(async (req, res) => {
 
 async function handleApi(req, res) {
   try {
-    if (req.method === 'GET' && (req.url || '').startsWith('/api/captcha')) {
-      const a = Math.floor(Math.random() * 9) + 1;
-      const b = Math.floor(Math.random() * 9) + 1;
-      const captchaId = crypto.randomBytes(8).toString('hex');
-      captchas.set(captchaId, { answer: String(a + b), expiresAt: Date.now() + 5 * 60 * 1000 });
-      res.writeHead(200, {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        Pragma: 'no-cache',
-        Expires: '0'
-      });
-      res.end(JSON.stringify({ ok: true, captchaId, prompt: `Prove you are human: ${a} + ${b} = ?` }));
-      return;
-    }
-
     if (req.method === 'POST' && req.url === '/api/signup') {
       const body = await readJson(req);
       const username = String(body.username || '').trim();
       const password = String(body.password || '');
       if (!/^[a-zA-Z0-9_\-]{3,24}$/.test(username)) return json(res, 400, { ok: false, error: 'Username must be 3-24 letters/numbers/_/-.' });
       if (password.length < 8) return json(res, 400, { ok: false, error: 'Password must be 8+ chars.' });
-      if (!consumeCaptcha(body.captchaId, body.captchaAnswer)) return json(res, 400, { ok: false, error: 'Captcha failed.' });
 
       const db = readUsers();
       if (db.users.find((u) => decryptText(u.usernameEnc) === username.toLowerCase())) return json(res, 409, { ok: false, error: 'Username already exists.' });
@@ -93,7 +74,6 @@ async function handleApi(req, res) {
       const body = await readJson(req);
       const username = String(body.username || '').trim().toLowerCase();
       const password = String(body.password || '');
-      if (!consumeCaptcha(body.captchaId, body.captchaAnswer)) return json(res, 400, { ok: false, error: 'Captcha failed.' });
       const db = readUsers();
       const user = db.users.find((u) => decryptText(u.usernameEnc) === username);
       if (!user) return json(res, 404, { ok: false, error: 'User not found.' });
@@ -341,16 +321,6 @@ async function readJson(req) {
 function json(res, code, payload) {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
-}
-
-function consumeCaptcha(captchaId, answerRaw) {
-  const id = String(captchaId || '');
-  const answer = String(answerRaw || '').trim();
-  const entry = captchas.get(id);
-  if (!entry) return false;
-  captchas.delete(id);
-  if (Date.now() > entry.expiresAt) return false;
-  return answer === entry.answer;
 }
 
 function send(ws, payload) { if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(payload)); }

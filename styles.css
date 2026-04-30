@@ -17,13 +17,18 @@ button { cursor: pointer; }
 .auth-shell { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; background: radial-gradient(circle at 20% 0%, rgba(96,36,180,.35), rgba(0,0,0,.9) 42%), rgba(0,0,0,.84); backdrop-filter: blur(14px); }
 .auth-shell[hidden] { display: none; }
 .auth-veil { width: min(560px, 92vw); padding: clamp(18px, 4vw, 36px); }
-.auth-veil h2 { margin-bottom: 18px; letter-spacing: .08em; text-transform: uppercase; transform: rotateX(calc(var(--my) * -2.2deg)) rotateY(calc(var(--mx) * 2.8deg)) rotateZ(calc(var(--mx) * 0.5deg)); transform-style: preserve-3d; text-shadow: 0 0 14px rgba(129,73,255,.42), 0 0 30px rgba(244,201,93,.22); }
+.tesseract-mark { width: 72px; height: 72px; margin: 4px auto 20px; position: relative; transform-style: preserve-3d; animation: spinTesseract 7s linear infinite; }
+.tesseract-mark span { position: absolute; inset: 10px; border: 1px solid rgba(244,239,226,.6); box-shadow: 0 0 18px rgba(130,70,255,.4), 0 0 28px rgba(244,201,93,.18); }
+.tesseract-mark span:last-child { inset: 0; transform: rotate(45deg) scale(.78); border-color: rgba(244,201,93,.75); }
+@keyframes spinTesseract { from { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);} to { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);} }
 .auth-veil label { text-transform: uppercase; letter-spacing: .18em; }
 .auth-veil input { border: 0; border-bottom: 1px solid rgba(244,239,226,.28); border-radius: 0; background: transparent; padding: 10px 0; color: rgba(255,249,236,.98); caret-color: rgba(244,201,93,.96); letter-spacing: .06em; text-shadow: 0 0 12px rgba(140,82,255,.25); transition: border-color .12s linear, transform .12s linear, text-shadow .12s linear; }
 .auth-veil input::placeholder { color: rgba(244,239,226,.35); letter-spacing: .12em; }
 .auth-veil input:focus { outline: none; border-bottom-color: rgba(244,201,93,.9); box-shadow: none; transform: translateY(-1px); text-shadow: 0 0 18px rgba(244,201,93,.22), 0 0 20px rgba(129,73,255,.28); }
-.auth-captcha { margin: 14px 0 6px; color: rgba(244,239,226,.74); letter-spacing: .18em; text-transform: uppercase; font-size: .72rem; }
-.auth-actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px; }
+.auth-actions { margin-top: 16px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.auth-veil .eyebrow, .auth-status, #authStatus, .auth-veil label { text-align: center; }
+.auth-inline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; width: 100%; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: rgba(244,239,226,.72); }
+.auth-inline input { width: auto; border: 0; padding: 0; accent-color: rgba(244,201,93,.95); }
 .eye-shell, .gate, .creator, .void { position: fixed; inset: 0; }
 .gate { z-index: 1; overflow: hidden; transition: opacity 1s var(--ease), transform 1.5s var(--ease), filter 1.2s var(--ease); }
 .eye-shell[data-mode="creator"] .gate, .eye-shell[data-mode="room"] .gate { opacity: 0; pointer-events: none; transform: scale(1.4); filter: blur(16px) brightness(0.28); }
